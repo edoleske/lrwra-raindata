@@ -6,6 +6,7 @@ import { api } from "~/utils/api";
 
 const Home: NextPage = () => {
   const hello = api.example.hello.useQuery({ text: "from tRPC" });
+  const testIHist = api.example.currentValues.useQuery();
 
   return (
     <>
@@ -45,6 +46,7 @@ const Home: NextPage = () => {
           </div>
           <p className="text-2xl text-white">
             {hello.data ? hello.data.greeting : "Loading tRPC query..."}
+            {testIHist.data ? "Data loaded!" : "Data loading...."}
           </p>
         </div>
       </main>
