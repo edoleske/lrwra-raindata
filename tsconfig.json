@@ -28,6 +28,6 @@
     "**/*.tsx",
     "**/*.cjs",
     "**/*.mjs"
-  ],
+, "src/server/db.ts"  ],
   "exclude": ["node_modules"]
 }
