@@ -1,8 +1,8 @@
 // When we get query results via node-adodb, we need to parse the results into known types for validation
 
-export function assertCurrentValues(
+export function assertHistorianValues(
   input: unknown
-): asserts input is IHistCurrentValues[] {
+): asserts input is IHistValues[] {
   if (!Array.isArray(input)) throw new Error("Input is not an array!");
 
   input.forEach((element) => {
