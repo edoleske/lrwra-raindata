@@ -151,8 +151,9 @@ export const rainDataRouter = createTRPCRouter({
       assertHistorianValues(result);
 
       const dbValues = result[0];
-      if (dbValues === undefined)
+      if (dbValues === undefined) {
         throw new Error("No data returned from database!");
+      }
 
       const values = parseDatabaseValues(dbValues);
       return { values };
@@ -212,8 +213,9 @@ export const rainDataRouter = createTRPCRouter({
         assertHistorianValues(result);
 
         const dbValues = result[0];
-        if (dbValues === undefined)
+        if (dbValues === undefined) {
           throw new Error("No data returned from database!");
+        }
 
         const values = parseDatabaseValues(dbValues);
         return { values };

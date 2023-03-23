@@ -6,10 +6,6 @@ import { api } from "~/utils/api";
 
 const Home: NextPage = () => {
   const hello = api.example.hello.useQuery({ text: "from tRPC" });
-  // const values = api.raindata.currentValues.useQuery();
-  const values = api.raindata.dateValues.useQuery({
-    date: new Date(2023, 2, 16),
-  });
 
   return (
     <>
@@ -50,15 +46,6 @@ const Home: NextPage = () => {
           <p className="text-2xl text-white">
             {hello.data ? hello.data.greeting : "Loading tRPC query..."}
           </p>
-          <ul className="text-white">
-            {values.data &&
-              values.data.values.readings.map((reading) => (
-                <li key={reading.label}>
-                  <strong>{reading.label}: </strong>
-                  {reading.quality === 100 ? reading.value : "ERR!"}
-                </li>
-              ))}
-          </ul>
         </div>
       </main>
     </>
