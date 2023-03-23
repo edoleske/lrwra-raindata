@@ -33,9 +33,9 @@ export const rainDataRouter = createTRPCRouter({
         ADAMS.SW1942CAT.F_CV.VALUE, ADAMS.SW1942CAT.F_CV.QUALITY, 
         ADAMS.SD1942CAT.F_CV.VALUE, ADAMS.SD1942CAT.F_CV.QUALITY, 
         ADAMS.CP1942CAT.F_CV.VALUE, ADAMS.CP1942CAT.F_CV.QUALITY 
-        FROM IHTREND 
-        WHERE samplingmode = interpolated 
-        ORDER BY TIMESTAMP DESC
+      FROM IHTREND 
+      WHERE samplingmode = interpolated 
+      ORDER BY TIMESTAMP DESC
     `;
 
     try {

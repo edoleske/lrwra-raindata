@@ -46,8 +46,16 @@ const Home: NextPage = () => {
           </div>
           <p className="text-2xl text-white">
             {hello.data ? hello.data.greeting : "Loading tRPC query..."}
-            {testIHist.data ? "Data loaded!" : "Data loading...."}
           </p>
+          <ul className="text-white">
+            {testIHist.data &&
+              testIHist.data.values.readings.map((reading) => (
+                <li key={reading.label}>
+                  <strong>{reading.label}: </strong>
+                  {reading.quality === 100 ? reading.value : "ERR!"}
+                </li>
+              ))}
+          </ul>
         </div>
       </main>
     </>
