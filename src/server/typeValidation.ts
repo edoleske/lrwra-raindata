@@ -3,8 +3,11 @@
 export function assertHistorianValues(
   input: unknown
 ): asserts input is IHistValues[] {
+  // Check if input is an array
   if (!Array.isArray(input)) throw new Error("Input is not an array!");
 
+  // Check if each expected field is in each object in array
+  // This does not check type of values, but this is already probably overkill
   input.forEach((element) => {
     if (
       !("timestamp" in element) ||

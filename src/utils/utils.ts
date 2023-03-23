@@ -1,3 +1,4 @@
+// Utility function to get new Date object with time zeroed out
 export const today = () => {
   const result = new Date();
   result.setHours(0);

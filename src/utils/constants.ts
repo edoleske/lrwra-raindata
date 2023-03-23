@@ -1,3 +1,4 @@
+// List of rain gauges for use on the frontend
 export const RainGauges = [
   "ADAMS.AF2295LQT",
   "FOURCHE.FC2295LQT",
