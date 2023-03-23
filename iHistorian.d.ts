@@ -1,4 +1,4 @@
-interface CurrentValues {
+interface IHistCurrentValues {
   timestamp: string;
   "ADAMS.AF2295LQT.F_CV.Value": number;
   "ADAMS.AF2295LQT.F_CV.Quality": number;

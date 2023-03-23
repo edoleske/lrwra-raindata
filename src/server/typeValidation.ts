@@ -2,7 +2,7 @@
 
 export function assertCurrentValues(
   input: unknown
-): asserts input is CurrentValues[] {
+): asserts input is IHistCurrentValues[] {
   if (!Array.isArray(input)) throw new Error("Input is not an array!");
 
   input.forEach((element) => {
