@@ -3,123 +3,37 @@ import { add, format } from "date-fns";
 import { z } from "zod";
 import { connection } from "~/server/db";
 import { assertHistorianValues } from "~/server/typeValidation";
-import { today } from "~/utils/utils";
+import { parseDatabaseValues, today } from "~/utils/utils";
 import { createTRPCRouter, publicProcedure } from "../trpc";
-
-// Helper function transform parsed fields from database to more useful object
-const parseDatabaseValues = (dbValues: IHistValues): GaugeValues => {
-  return {
-    timestamp: new Date(dbValues.timestamp),
-    readings: [
-      {
-        label: "ADAMS.AF2295LQT",
-        value: dbValues["ADAMS.AF2295LQT.F_CV.Value"],
-        quality: dbValues["ADAMS.AF2295LQT.F_CV.Quality"],
-      },
-      {
-        label: "FOURCHE.FC2295LQT",
-        value: dbValues["FOURCHE.FC2295LQT.F_CV.Value"],
-        quality: dbValues["FOURCHE.FC2295LQT.F_CV.Quality"],
-      },
-      {
-        label: "ADAMS.CAB2295LQT",
-        value: dbValues["ADAMS.CAB2295LQT.F_CV.Value"],
-        quality: dbValues["ADAMS.CAB2295LQT.F_CV.Quality"],
-      },
-      {
-        label: "ADAMS.AS1941CAT",
-        value: dbValues["ADAMS.AS1941CAT.F_CV.Value"],
-        quality: dbValues["ADAMS.AS1941CAT.F_CV.Quality"],
-      },
-      {
-        label: "ADAMS.CR1941LQT",
-        value: dbValues["ADAMS.CR1941LQT.F_CV.Value"],
-        quality: dbValues["ADAMS.CR1941LQT.F_CV.Quality"],
-      },
-      {
-        label: "ADAMS.CV1942CAT",
-        value: dbValues["ADAMS.CV1942CAT.F_CV.Value"],
-        quality: dbValues["ADAMS.CV1942CAT.F_CV.Quality"],
-      },
-      {
-        label: "ADAMS.HR1942CAT",
-        value: dbValues["ADAMS.HR1942CAT.F_CV.Value"],
-        quality: dbValues["ADAMS.HR1942CAT.F_CV.Quality"],
-      },
-      {
-        label: "ADAMS.JR1941CAT",
-        value: dbValues["ADAMS.JR1941CAT.F_CV.Value"],
-        quality: dbValues["ADAMS.JR1941CAT.F_CV.Quality"],
-      },
-      {
-        label: "MAUMELLE.LM1941CAT",
-        value: dbValues["MAUMELLE.LM1941CAT.F_CV.Value"],
-        quality: dbValues["MAUMELLE.LM1941CAT.F_CV.Quality"],
-      },
-      {
-        label: "ADAMS.RR1942CAT",
-        value: dbValues["ADAMS.RR1942CAT.F_CV.Value"],
-        quality: dbValues["ADAMS.RR1942CAT.F_CV.Quality"],
-      },
-      {
-        label: "ADAMS.LF1941CAT",
-        value: dbValues["ADAMS.LF1941CAT.F_CV.Value"],
-        quality: dbValues["ADAMS.LF1941CAT.F_CV.Quality"],
-      },
-      {
-        label: "ADAMS.OC1941CAT",
-        value: dbValues["ADAMS.OC1941CAT.F_CV.Value"],
-        quality: dbValues["ADAMS.OC1941CAT.F_CV.Quality"],
-      },
-      {
-        label: "ADAMS.PF2295LQT",
-        value: dbValues["ADAMS.PF2295LQT.F_CV.Value"],
-        quality: dbValues["ADAMS.PF2295LQT.F_CV.Quality"],
-      },
-      {
-        label: "ADAMS.TS1941CAT",
-        value: dbValues["ADAMS.TS1941CAT.F_CV.Value"],
-        quality: dbValues["ADAMS.TS1941CAT.F_CV.Quality"],
-      },
-      {
-        label: "ADAMS.CM1942CAT",
-        value: dbValues["ADAMS.CM1942CAT.F_CV.Value"],
-        quality: dbValues["ADAMS.CM1942CAT.F_CV.Quality"],
-      },
-      {
-        label: "ADAMS.SW1942CAT",
-        value: dbValues["ADAMS.SW1942CAT.F_CV.Value"],
-        quality: dbValues["ADAMS.SW1942CAT.F_CV.Quality"],
-      },
-      {
-        label: "ADAMS.SD1942CAT",
-        value: dbValues["ADAMS.SD1942CAT.F_CV.Value"],
-        quality: dbValues["ADAMS.SD1942CAT.F_CV.Quality"],
-      },
-      {
-        label: "ADAMS.CP1942CAT",
-        value: dbValues["ADAMS.CP1942CAT.F_CV.Value"],
-        quality: dbValues["ADAMS.CP1942CAT.F_CV.Quality"],
-      },
-    ],
-  };
-};
 
 export const rainDataRouter = createTRPCRouter({
   // This endpoint is for testing queries
   testIHist: publicProcedure.query(async () => {
     const sqlString = `
-      SELECT TOP 1
+      SELECT
         timestamp,
         ADAMS.AF2295LQT.F_CV.VALUE, ADAMS.AF2295LQT.F_CV.QUALITY,
         ADAMS.AF2295LQY.F_CV.VALUE, ADAMS.AF2295LQY.F_CV.QUALITY
       FROM IHTREND
-      WHERE samplingmode = interpolated 
-      ORDER BY TIMESTAMP DESC
+      WHERE samplingmode = rawbytime AND timestamp = '04/03/2023 01:00:00'
+      ORDER BY TIMESTAMP
     `;
-    const adoresult = await connection.query(sqlString);
-    console.log(JSON.stringify(adoresult, null, 2));
-    return { result: adoresult };
+    try {
+      const adoresult = await connection.query(sqlString);
+      console.log(JSON.stringify(adoresult, null, 2));
+      return { result: adoresult };
+    } catch (err) {
+      // String(err) works for all errors except for database errors
+      // JSON.stringify gives more info on why iHistorian's OLEDB provider errored
+      const parsedJSON = JSON.stringify(err);
+      const message = parsedJSON === "{}" ? String(err) : parsedJSON;
+
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: message,
+        cause: err,
+      });
+    }
   }),
   // Gets the most recent readings for each gauge
   currentValues: publicProcedure.query(async () => {
