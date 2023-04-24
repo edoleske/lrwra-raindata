@@ -37,3 +37,44 @@ interface IHistValues {
   "ADAMS.CP1942CAT.F_CV.Value": number;
   "ADAMS.CP1942CAT.F_CV.Quality": number;
 }
+
+interface IHistHistory {
+  timestamp: string;
+  [key: string]: number;
+  "ADAMS.AF2295LQT.F_CV.Value"?: number;
+  "ADAMS.AF2295LQT.F_CV.Quality"?: number;
+  "FOURCHE.FC2295LQT.F_CV.Value"?: number;
+  "FOURCHE.FC2295LQT.F_CV.Quality"?: number;
+  "ADAMS.CAB2295LQT.F_CV.Value"?: number;
+  "ADAMS.CAB2295LQT.F_CV.Quality"?: number;
+  "ADAMS.AS1941CAT.F_CV.Value"?: number;
+  "ADAMS.AS1941CAT.F_CV.Quality"?: number;
+  "ADAMS.CR1941LQT.F_CV.Value"?: number;
+  "ADAMS.CR1941LQT.F_CV.Quality"?: number;
+  "ADAMS.CV1942CAT.F_CV.Value"?: number;
+  "ADAMS.CV1942CAT.F_CV.Quality"?: number;
+  "ADAMS.HR1942CAT.F_CV.Value"?: number;
+  "ADAMS.HR1942CAT.F_CV.Quality"?: number;
+  "ADAMS.JR1941CAT.F_CV.Value"?: number;
+  "ADAMS.JR1941CAT.F_CV.Quality"?: number;
+  "MAUMELLE.LM1941CAT.F_CV.Value"?: number;
+  "MAUMELLE.LM1941CAT.F_CV.Quality"?: number;
+  "ADAMS.RR1942CAT.F_CV.Value"?: number;
+  "ADAMS.RR1942CAT.F_CV.Quality"?: number;
+  "ADAMS.LF1941CAT.F_CV.Value"?: number;
+  "ADAMS.LF1941CAT.F_CV.Quality"?: number;
+  "ADAMS.OC1941CAT.F_CV.Value"?: number;
+  "ADAMS.OC1941CAT.F_CV.Quality"?: number;
+  "ADAMS.PF2295LQT.F_CV.Value"?: number;
+  "ADAMS.PF2295LQT.F_CV.Quality"?: number;
+  "ADAMS.TS1941CAT.F_CV.Value"?: number;
+  "ADAMS.TS1941CAT.F_CV.Quality"?: number;
+  "ADAMS.CM1942CAT.F_CV.Value"?: number;
+  "ADAMS.CM1942CAT.F_CV.Quality"?: number;
+  "ADAMS.SW1942CAT.F_CV.Value"?: number;
+  "ADAMS.SW1942CAT.F_CV.Quality"?: number;
+  "ADAMS.SD1942CAT.F_CV.Value"?: number;
+  "ADAMS.SD1942CAT.F_CV.Quality"?: number;
+  "ADAMS.CP1942CAT.F_CV.Value"?: number;
+  "ADAMS.CP1942CAT.F_CV.Quality"?: number;
+}

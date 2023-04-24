@@ -1,10 +1,13 @@
-interface GaugeReading {
-  label: string;
-  value: number;
-  quality: number;
+interface AllGaugeValues {
+  timestamp: Date;
+  readings: {
+    label: string;
+    value: number;
+    quality: number;
+  }[];
 }
 
-interface GaugeValues {
-  timestamp: Date;
-  readings: GaugeReading[];
+interface SingleGaugeHistory {
+  label: string;
+  readings: { timestamp: Date; value: number }[];
 }

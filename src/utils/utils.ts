@@ -9,7 +9,7 @@ export const today = () => {
 };
 
 // Helper function transform parsed fields from database to more useful object
-export const parseDatabaseValues = (dbValues: IHistValues): GaugeValues => {
+export const parseDatabaseValues = (dbValues: IHistValues): AllGaugeValues => {
   return {
     timestamp: new Date(dbValues.timestamp),
     readings: [
@@ -104,5 +104,27 @@ export const parseDatabaseValues = (dbValues: IHistValues): GaugeValues => {
         quality: dbValues["ADAMS.CP1942CAT.F_CV.Quality"],
       },
     ],
+  };
+};
+
+export const parseDatabaseHistory = (
+  dbHistory: IHistHistory[],
+  gauge: string
+): SingleGaugeHistory => {
+  const valueKey = `${gauge}.F_CV.Value`;
+  const qualityKey = `${gauge}.F_CV.Quality`;
+
+  return {
+    label: gauge,
+    readings: dbHistory.map((reading) => {
+      // The as number is safe because the type validation occurs in typeValidation.ts
+      const value = reading[valueKey] as number;
+      const quality = reading[qualityKey];
+
+      return {
+        timestamp: new Date(reading.timestamp),
+        value: quality === 100 ? value : 0,
+      };
+    }),
   };
 };

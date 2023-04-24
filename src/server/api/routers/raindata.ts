@@ -2,9 +2,17 @@ import { TRPCError } from "@trpc/server";
 import { add, format } from "date-fns";
 import { z } from "zod";
 import { connection } from "~/server/db";
-import { assertHistorianValues } from "~/server/typeValidation";
-import { parseDatabaseValues, today } from "~/utils/utils";
+import {
+  assertHistorianHistory,
+  assertHistorianValues,
+} from "~/server/typeValidation";
+import {
+  parseDatabaseHistory,
+  parseDatabaseValues,
+  today,
+} from "~/utils/utils";
 import { createTRPCRouter, publicProcedure } from "../trpc";
+import { RainGauges } from "~/utils/constants";
 
 export const rainDataRouter = createTRPCRouter({
   // This endpoint is for testing queries
@@ -140,6 +148,52 @@ export const rainDataRouter = createTRPCRouter({
 
         const values = parseDatabaseValues(dbValues);
         return { values };
+      } catch (err) {
+        // String(err) works for all errors except for database errors
+        // JSON.stringify gives more info on why iHistorian's OLEDB provider errored
+        const parsedJSON = JSON.stringify(err);
+        const message = parsedJSON === "{}" ? String(err) : parsedJSON;
+
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: message,
+          cause: err,
+        });
+      }
+    }),
+  interpolatedSamples: publicProcedure
+    .input(
+      z.object({
+        gauge: z.string(),
+        startDate: z.date(),
+        endDate: z.date(),
+        samples: z.number().int().positive().lte(50000),
+      })
+    )
+    .query(async ({ input }) => {
+      if (!RainGauges.includes(input.gauge)) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: `${input.gauge} is not a recognized rain gauge.`,
+        });
+      }
+
+      const queryString = `
+        SELECT
+          timestamp, ${input.gauge}.F_CV.VALUE, ${input.gauge}.F_CV.QUALITY,
+        FROM IHTREND
+        WHERE samplingmode = interpolated AND 
+          numberofsamples = ${input.samples} AND 
+          timestamp >= '${format(input.startDate, "MM/dd/yyyy")}' AND 
+          timestamp <= '${format(input.endDate, "MM/dd/yyyy")}'
+        ORDER BY TIMESTAMP
+      `;
+      try {
+        const result = await connection.query(queryString);
+        assertHistorianHistory(result, input.gauge);
+
+        const history = parseDatabaseHistory(result, input.gauge);
+        return history;
       } catch (err) {
         // String(err) works for all errors except for database errors
         // JSON.stringify gives more info on why iHistorian's OLEDB provider errored

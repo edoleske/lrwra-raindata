@@ -54,3 +54,31 @@ export function assertHistorianValues(
     }
   });
 }
+
+export function assertHistorianHistory(
+  input: unknown,
+  gauge: string
+): asserts input is IHistHistory[] {
+  // Check if input is an array
+  if (!Array.isArray(input)) throw new Error("Input is not an array!");
+
+  const valueKey = `${gauge}.F_CV.Value`;
+  const qualityKey = `${gauge}.F_CV.Quality`;
+
+  input.forEach((element) => {
+    const timestamp = (element as IHistHistory)["timestamp"];
+    const value = (element as IHistHistory)[valueKey];
+    const quality = (element as IHistHistory)[qualityKey];
+
+    if (timestamp === undefined)
+      throw new Error("IHistorian history object missing timestamp");
+    if (value === undefined)
+      throw new Error("IHistorian history object missing value");
+    if (quality === undefined)
+      throw new Error("IHistorian history object missing quality");
+
+    if (isNaN(+value) || isNaN(+quality)) {
+      throw new Error("A value is not a number!");
+    }
+  });
+}
