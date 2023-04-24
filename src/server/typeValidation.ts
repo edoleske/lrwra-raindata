@@ -1,6 +1,8 @@
 // When we get query results via node-adodb, we need to parse the results into known types for validation
 
-export function assertHistorianValues(
+import { RainGauges } from "~/utils/constants";
+
+export function assertHistorianValuesAll(
   input: unknown
 ): asserts input is IHistValues[] {
   // Check if input is an array
@@ -9,56 +11,46 @@ export function assertHistorianValues(
   // Check if each expected field is in each object in array
   // This does not check type of values, but this is already probably overkill
   input.forEach((element) => {
-    if (
-      !("timestamp" in element) ||
-      !("ADAMS.AF2295LQT.F_CV.Value" in element) ||
-      !("ADAMS.AF2295LQT.F_CV.Quality" in element) ||
-      !("FOURCHE.FC2295LQT.F_CV.Value" in element) ||
-      !("FOURCHE.FC2295LQT.F_CV.Quality" in element) ||
-      !("ADAMS.CAB2295LQT.F_CV.Value" in element) ||
-      !("ADAMS.CAB2295LQT.F_CV.Quality" in element) ||
-      !("ADAMS.AS1941CAT.F_CV.Value" in element) ||
-      !("ADAMS.AS1941CAT.F_CV.Quality" in element) ||
-      !("ADAMS.CR1941LQT.F_CV.Value" in element) ||
-      !("ADAMS.CR1941LQT.F_CV.Quality" in element) ||
-      !("ADAMS.CV1942CAT.F_CV.Value" in element) ||
-      !("ADAMS.CV1942CAT.F_CV.Quality" in element) ||
-      !("ADAMS.HR1942CAT.F_CV.Value" in element) ||
-      !("ADAMS.HR1942CAT.F_CV.Quality" in element) ||
-      !("ADAMS.JR1941CAT.F_CV.Value" in element) ||
-      !("ADAMS.JR1941CAT.F_CV.Quality" in element) ||
-      !("MAUMELLE.LM1941CAT.F_CV.Value" in element) ||
-      !("MAUMELLE.LM1941CAT.F_CV.Quality" in element) ||
-      !("ADAMS.RR1942CAT.F_CV.Value" in element) ||
-      !("ADAMS.RR1942CAT.F_CV.Quality" in element) ||
-      !("ADAMS.LF1941CAT.F_CV.Value" in element) ||
-      !("ADAMS.LF1941CAT.F_CV.Quality" in element) ||
-      !("ADAMS.OC1941CAT.F_CV.Value" in element) ||
-      !("ADAMS.OC1941CAT.F_CV.Quality" in element) ||
-      !("ADAMS.PF2295LQT.F_CV.Value" in element) ||
-      !("ADAMS.PF2295LQT.F_CV.Quality" in element) ||
-      !("ADAMS.TS1941CAT.F_CV.Value" in element) ||
-      !("ADAMS.TS1941CAT.F_CV.Quality" in element) ||
-      !("ADAMS.CM1942CAT.F_CV.Value" in element) ||
-      !("ADAMS.CM1942CAT.F_CV.Quality" in element) ||
-      !("ADAMS.SW1942CAT.F_CV.Value" in element) ||
-      !("ADAMS.SW1942CAT.F_CV.Quality" in element) ||
-      !("ADAMS.SD1942CAT.F_CV.Value" in element) ||
-      !("ADAMS.SD1942CAT.F_CV.Quality" in element) ||
-      !("ADAMS.CP1942CAT.F_CV.Value" in element) ||
-      !("ADAMS.CP1942CAT.F_CV.Quality" in element)
-    ) {
-      throw new Error(
-        "Input is missing property from CurrentValues interface!"
-      );
+    const timestamp = (element as IHistValues)["timestamp"];
+    if (timestamp === undefined) {
+      throw new Error("IHistorian values object missing timestamp");
     }
+
+    RainGauges.forEach((gauge) => {
+      const valueKey = `${gauge}.F_CV.Value`;
+      const qualityKey = `${gauge}.F_CV.Quality`;
+
+      // All values are optional, so check if defined ones are ok
+      const value = (element as IHistValues)[valueKey];
+      const quality = (element as IHistValues)[qualityKey];
+
+      if (value !== undefined) {
+        if (quality === undefined) {
+          throw new Error(
+            `IHistorian missing quality but has value for gauge ${gauge}`
+          );
+        }
+
+        if (isNaN(+value)) {
+          throw new Error(
+            `IHistorian values object value for gauge ${gauge} is NaN!`
+          );
+        }
+      }
+
+      if (quality !== undefined && value === undefined) {
+        throw new Error(
+          `IHistorian values object missing value but has quality for gauge ${gauge}`
+        );
+      }
+    });
   });
 }
 
-export function assertHistorianHistory(
+export function assertHistorianValuesSingle(
   input: unknown,
   gauge: string
-): asserts input is IHistHistory[] {
+): asserts input is IHistValues[] {
   // Check if input is an array
   if (!Array.isArray(input)) throw new Error("Input is not an array!");
 
@@ -66,9 +58,9 @@ export function assertHistorianHistory(
   const qualityKey = `${gauge}.F_CV.Quality`;
 
   input.forEach((element) => {
-    const timestamp = (element as IHistHistory)["timestamp"];
-    const value = (element as IHistHistory)[valueKey];
-    const quality = (element as IHistHistory)[qualityKey];
+    const timestamp = (element as IHistValues)["timestamp"];
+    const value = (element as IHistValues)[valueKey];
+    const quality = (element as IHistValues)[qualityKey];
 
     if (timestamp === undefined)
       throw new Error("IHistorian history object missing timestamp");
@@ -77,7 +69,7 @@ export function assertHistorianHistory(
     if (quality === undefined)
       throw new Error("IHistorian history object missing quality");
 
-    if (isNaN(+value) || isNaN(+quality)) {
+    if (isNaN(+value)) {
       throw new Error("A value is not a number!");
     }
   });

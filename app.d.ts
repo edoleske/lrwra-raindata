@@ -3,7 +3,7 @@ interface AllGaugeValues {
   readings: {
     label: string;
     value: number;
-    quality: number;
+    quality: string;
   }[];
 }
 

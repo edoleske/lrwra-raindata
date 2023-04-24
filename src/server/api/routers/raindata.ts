@@ -3,8 +3,8 @@ import { add, format } from "date-fns";
 import { z } from "zod";
 import { connection } from "~/server/db";
 import {
-  assertHistorianHistory,
-  assertHistorianValues,
+  assertHistorianValuesSingle,
+  assertHistorianValuesAll,
 } from "~/server/typeValidation";
 import {
   parseDatabaseHistory,
@@ -13,6 +13,19 @@ import {
 } from "~/utils/utils";
 import { createTRPCRouter, publicProcedure } from "../trpc";
 import { RainGauges } from "~/utils/constants";
+
+const handleError = (error: unknown) => {
+  // String(err) works for all errors except for database errors
+  // JSON.stringify gives more info on why iHistorian's OLEDB provider errored
+  const parsedJSON = JSON.stringify(error);
+  const message = parsedJSON === "{}" ? String(error) : parsedJSON;
+
+  throw new TRPCError({
+    code: "INTERNAL_SERVER_ERROR",
+    message: message,
+    cause: error,
+  });
+};
 
 export const rainDataRouter = createTRPCRouter({
   // This endpoint is for testing queries
@@ -31,16 +44,7 @@ export const rainDataRouter = createTRPCRouter({
       console.log(JSON.stringify(adoresult, null, 2));
       return { result: adoresult };
     } catch (err) {
-      // String(err) works for all errors except for database errors
-      // JSON.stringify gives more info on why iHistorian's OLEDB provider errored
-      const parsedJSON = JSON.stringify(err);
-      const message = parsedJSON === "{}" ? String(err) : parsedJSON;
-
-      throw new TRPCError({
-        code: "INTERNAL_SERVER_ERROR",
-        message: message,
-        cause: err,
-      });
+      handleError(err);
     }
   }),
   // Gets the most recent readings for each gauge
@@ -73,7 +77,7 @@ export const rainDataRouter = createTRPCRouter({
 
     try {
       const result = await connection.query(queryString);
-      assertHistorianValues(result);
+      assertHistorianValuesAll(result);
 
       const dbValues = result[0];
       if (dbValues === undefined) {
@@ -83,16 +87,7 @@ export const rainDataRouter = createTRPCRouter({
       const values = parseDatabaseValues(dbValues);
       return { values };
     } catch (err) {
-      // String(err) works for all errors except for database errors
-      // JSON.stringify gives more info on why iHistorian's OLEDB provider errored
-      const parsedJSON = JSON.stringify(err);
-      const message = parsedJSON === "{}" ? String(err) : parsedJSON;
-
-      throw new TRPCError({
-        code: "INTERNAL_SERVER_ERROR",
-        message: message,
-        cause: err,
-      });
+      handleError(err);
     }
   }),
   // Gets the daily accured value for a given date, date must be before the current date
@@ -139,7 +134,7 @@ export const rainDataRouter = createTRPCRouter({
     `;
       try {
         const result = await connection.query(queryString);
-        assertHistorianValues(result);
+        assertHistorianValuesAll(result);
 
         const dbValues = result[0];
         if (dbValues === undefined) {
@@ -149,16 +144,7 @@ export const rainDataRouter = createTRPCRouter({
         const values = parseDatabaseValues(dbValues);
         return { values };
       } catch (err) {
-        // String(err) works for all errors except for database errors
-        // JSON.stringify gives more info on why iHistorian's OLEDB provider errored
-        const parsedJSON = JSON.stringify(err);
-        const message = parsedJSON === "{}" ? String(err) : parsedJSON;
-
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: message,
-          cause: err,
-        });
+        handleError(err);
       }
     }),
   interpolatedSamples: publicProcedure
@@ -190,21 +176,12 @@ export const rainDataRouter = createTRPCRouter({
       `;
       try {
         const result = await connection.query(queryString);
-        assertHistorianHistory(result, input.gauge);
+        assertHistorianValuesSingle(result, input.gauge);
 
         const history = parseDatabaseHistory(result, input.gauge);
         return history;
       } catch (err) {
-        // String(err) works for all errors except for database errors
-        // JSON.stringify gives more info on why iHistorian's OLEDB provider errored
-        const parsedJSON = JSON.stringify(err);
-        const message = parsedJSON === "{}" ? String(err) : parsedJSON;
-
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: message,
-          cause: err,
-        });
+        handleError(err);
       }
     }),
 });
