@@ -10,7 +10,7 @@ export const today = () => {
   return result;
 };
 
-// Helper function transform parsed fields from database to more useful object
+// This function parses response from IHistorian with a value for every gauge
 export const parseDatabaseValues = (dbValues: IHistValues): AllGaugeValues => {
   return {
     timestamp: new Date(dbValues.timestamp),
@@ -18,6 +18,7 @@ export const parseDatabaseValues = (dbValues: IHistValues): AllGaugeValues => {
       const valueKey = `${gauge}.F_CV.Value`;
       const qualityKey = `${gauge}.F_CV.Quality`;
 
+      // The "as [type]" is safe because the type validation occurs in typeValidation.ts
       return {
         label: gauge,
         value: dbValues[valueKey] as number,
@@ -27,6 +28,7 @@ export const parseDatabaseValues = (dbValues: IHistValues): AllGaugeValues => {
   };
 };
 
+// This function parses response from IHistorian with a value from one gauge only
 export const parseDatabaseHistory = (
   dbHistory: IHistValues[],
   gauge: string
@@ -37,7 +39,7 @@ export const parseDatabaseHistory = (
   return {
     label: gauge,
     readings: dbHistory.map((reading) => {
-      // The as number is safe because the type validation occurs in typeValidation.ts
+      // The "as [type]" is safe because the type validation occurs in typeValidation.ts
       const value = reading[valueKey] as number;
       const quality = reading[qualityKey] as string;
 
