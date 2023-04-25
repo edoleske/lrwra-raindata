@@ -9,5 +9,5 @@ interface AllGaugeValues {
 
 interface SingleGaugeHistory {
   label: string;
-  readings: { timestamp: Date; value: number }[];
+  readings: { timestamp: Date; value: number; quality: string }[];
 }

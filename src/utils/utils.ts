@@ -45,7 +45,8 @@ export const parseDatabaseHistory = (
 
       return {
         timestamp: new Date(reading.timestamp),
-        value: quality === "100" ? value : 0,
+        value: value,
+        quality: quality,
       };
     }),
   };

@@ -7,14 +7,7 @@ interface DataType {
   value: number;
 }
 
-const dummyData: DataType[] = [
-  { date: new Date(2022, 0, 1), value: 3 },
-  { date: new Date(2022, 0, 15), value: 2 },
-  { date: new Date(2022, 1, 1), value: 5 },
-  { date: new Date(2022, 1, 15), value: 4 },
-];
-
-const drawGraph = (svgRef: RefObject<SVGSVGElement>) => {
+const drawGraph = (svgRef: RefObject<SVGSVGElement>, data: DataType[]) => {
   const svg = d3
     .select(svgRef.current)
     .attr("width", 500)
@@ -22,29 +15,44 @@ const drawGraph = (svgRef: RefObject<SVGSVGElement>) => {
     .attr("style", "background-color: #F8F8F8");
 
   const timeExtent = [
-    Math.min(...dummyData.map((d) => d.date.getTime())),
-    Math.max(...dummyData.map((d) => d.date.getTime())),
+    Math.min(...data.map((d) => d.date.getTime())),
+    Math.max(...data.map((d) => d.date.getTime())),
   ];
 
   const xScale = d3.scaleTime().domain(timeExtent).range([0, 500]);
-  const yScale = d3.scaleLinear().domain([0, 6]).range([0, 500]);
+
+  const valueExtent = [
+    Math.min(...data.map((d) => d.value)),
+    Math.max(...data.map((d) => d.value)),
+  ];
+
+  const yScale = d3.scaleLinear().domain(valueExtent).range([500, 0]);
 
   const group = svg.append("g").attr("width", 500).attr("height", 500);
 
+  // group
+  //   .append("g")
+  //   .selectAll("dot")
+  //   .data(data)
+  //   .enter()
+  //   .append("circle")
+  //   .attr("cx", (d) => xScale(d.date.getTime()))
+  //   .attr("cy", (d) => yScale(d.value))
+  //   .attr("r", 2)
+  //   .style("fill", "#CC0000");
+
   group
     .append("g")
-    .selectAll("dot")
-    .data(dummyData)
-    .enter()
-    .append("circle")
-    .attr("cx", (d) => xScale(d.date.getTime()))
-    .attr("cy", (d) => yScale(d.value))
-    .attr("r", 2)
-    .style("fill", "#CC0000");
+    .attr("transform", "translate(0,450)")
+    .call(d3.axisBottom(xScale));
+  group
+    .append("g")
+    .attr("transform", "translate(50,0)")
+    .call(d3.axisLeft(yScale).ticks(5));
 
   group
     .append("path")
-    .datum(dummyData)
+    .datum(data)
     .attr("width", 20)
     .style("fill", "none")
     .style("stroke", "#CC0000")
@@ -67,7 +75,7 @@ const clearGraph = (svgRef: RefObject<SVGSVGElement>) => {
 const GraphPage = () => {
   const historyQuery = api.raindata.interpolatedSamples.useQuery({
     gauge: "ADAMS.AF2295LQT",
-    startDate: new Date(2023, 0, 1),
+    startDate: new Date(2023, 2, 1),
     endDate: new Date(2023, 3, 1),
     samples: 1000,
   });
@@ -75,17 +83,24 @@ const GraphPage = () => {
   const svgRef = useRef<SVGSVGElement>(null);
 
   useEffect(() => {
-    drawGraph(svgRef);
+    if (historyQuery.data) {
+      drawGraph(
+        svgRef,
+        historyQuery.data.readings.map((reading) => ({
+          date: reading.timestamp,
+          value: reading.value,
+        }))
+      );
+    }
 
     return () => {
       clearGraph(svgRef);
     };
-  }, [svgRef]);
+  }, [svgRef, historyQuery.data]);
 
   return (
     <div>
       <svg ref={svgRef}></svg>
-      <p>Test: {historyQuery.data?.readings.length}</p>
     </div>
   );
 };
