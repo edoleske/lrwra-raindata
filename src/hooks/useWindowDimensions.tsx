@@ -1,6 +1,11 @@
 import { useEffect, useState } from "react";
 
 const getWindowDimensions = () => {
+  // Ignore if server
+  if (typeof window === "undefined") {
+    return { width: 0, height: 0 };
+  }
+
   // This destructures the width and height values from the window object
   const { innerWidth: width, innerHeight: height } = window;
 

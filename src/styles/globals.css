@@ -1,3 +1,15 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+.spinner {
+  @apply box-border inline-block h-4 w-4 animate-spin rounded-full border-4 border-solid border-b-transparent;
+}
+
+.spinner-xl {
+  @apply h-12 w-12 border-8;
+}
+
+.spinner-primary {
+  @apply border-primary border-b-transparent;
+}
