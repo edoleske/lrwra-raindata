@@ -96,6 +96,7 @@ const GraphPage = () => {
             className="input-bordered input w-full"
             value={samples}
             onChange={onSamplesChange}
+            onFocus={(e) => e.target.select()}
           />
         </div>
         <div className="w-full max-w-xs">
