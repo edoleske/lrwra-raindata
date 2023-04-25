@@ -1,4 +1,4 @@
-import { add, compareAsc, format, sub } from "date-fns";
+import { add, compareAsc, format, parse, sub } from "date-fns";
 import React, { useState } from "react";
 import LineChart from "~/components/LineChart";
 import useWindowDimensions from "~/hooks/useWindowDimensions";
@@ -43,7 +43,7 @@ const GraphPage = () => {
   };
 
   const onStartDateChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const value = new Date(event.target.value);
+    const value = parse(event.target.value, "yyyy-MM-dd", new Date());
 
     // If new date is before end date
     if (compareAsc(value, endDate) === -1) {
@@ -54,7 +54,7 @@ const GraphPage = () => {
   };
 
   const onEndDateChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const value = new Date(event.target.value);
+    const value = parse(event.target.value, "yyyy-MM-dd", new Date());
 
     // If new date is after end date
     if (compareAsc(value, startDate) === 1) {
