@@ -153,7 +153,7 @@ export const rainDataRouter = createTRPCRouter({
         gauge: z.string(),
         startDate: z.date(),
         endDate: z.date(),
-        samples: z.number().int().positive().lte(50000),
+        samples: z.number().int().positive(),
       })
     )
     .query(async ({ input }) => {
@@ -169,7 +169,7 @@ export const rainDataRouter = createTRPCRouter({
           timestamp, ${input.gauge}.F_CV.VALUE, ${input.gauge}.F_CV.QUALITY,
         FROM IHTREND
         WHERE samplingmode = interpolated AND 
-          numberofsamples = ${input.samples} AND 
+          numberofsamples = ${Math.min(input.samples, 1000)} AND 
           timestamp >= '${format(input.startDate, "MM/dd/yyyy")}' AND 
           timestamp <= '${format(input.endDate, "MM/dd/yyyy")}'
         ORDER BY TIMESTAMP

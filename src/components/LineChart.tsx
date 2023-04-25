@@ -121,7 +121,7 @@ const LineChart = ({ data, dimensions }: LineChartProps) => {
 
   return (
     <div className="">
-      <svg ref={svgRef} className="m-auto bg-base-100 text-white"></svg>
+      <svg ref={svgRef} className="m-auto bg-base-100 text-base-content"></svg>
     </div>
   );
 };
