@@ -29,6 +29,12 @@ const config = {
       },
     ],
     "@typescript-eslint/no-unused-vars": ["warn", { argsIgnorePattern: "^_" }],
+    // React 17 can handle async functions, eslint didn't get the memo
+    // https://github.com/typescript-eslint/typescript-eslint/pull/4623
+    "@typescript-eslint/no-misused-promises": [
+      "error",
+      { checksVoidReturn: { attributes: false } },
+    ],
   },
 };
 

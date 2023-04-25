@@ -184,4 +184,45 @@ export const rainDataRouter = createTRPCRouter({
         handleError(err);
       }
     }),
+  downloadCSV: publicProcedure
+    .input(
+      z.object({
+        gauge: z.string(),
+        startDate: z.date(),
+        endDate: z.date(),
+      })
+    )
+    .mutation(async ({ input }) => {
+      const queryString = `
+        SELECT
+          timestamp, ${input.gauge}.F_CV.VALUE, ${input.gauge}.F_CV.QUALITY,
+        FROM IHTREND
+        WHERE samplingmode = interpolated AND 
+          intervalmilliseconds = 60000 AND 
+          timestamp >= '${format(input.startDate, "MM/dd/yyyy HH:mm:00")}' AND 
+          timestamp <= '${format(input.endDate, "MM/dd/yyyy HH:mm:00")}'
+        ORDER BY TIMESTAMP
+      `;
+
+      try {
+        const result = await connection.query(queryString);
+        assertHistorianValuesSingle(result, input.gauge);
+
+        const history = parseDatabaseHistory(result, input.gauge);
+
+        // Generate CSV file as string
+        let csvfile = '"Rain Gauge","Timestamp","Value","Quality"\r\n';
+        history.readings.forEach((reading) => {
+          csvfile += `"${history.label}","${format(
+            reading.timestamp,
+            "yyyy-MM-dd HH:mm:ss"
+          )}","${reading.value}","${reading.quality}"\r\n`;
+        });
+
+        // Return CSV File string encoded as base64
+        return csvfile;
+      } catch (err) {
+        handleError(err);
+      }
+    }),
 });
