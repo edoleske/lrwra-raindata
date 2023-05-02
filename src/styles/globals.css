@@ -2,6 +2,14 @@
 @tailwind components;
 @tailwind utilities;
 
+.height-minus-appbar {
+  height: calc(100vh - 64px) !important;
+}
+
+.height-minus-appbar-minus-padding {
+  min-height: calc(100vh - 64px - 32px) !important;
+}
+
 .spinner {
   @apply box-border inline-block h-4 w-4 animate-spin rounded-full border-4 border-solid border-b-transparent;
 }
