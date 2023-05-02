@@ -1,12 +1,13 @@
 import { add, compareAsc, format, parse, sub } from "date-fns";
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import LineChart from "~/components/LineChart";
 import useWindowDimensions from "~/hooks/useWindowDimensions";
 import { api } from "~/utils/api";
 import { RainGauges } from "~/utils/constants";
 
 const GraphPage = () => {
-  const { width: wWidth, height: wHeight } = useWindowDimensions();
+  const divRef = useRef<HTMLDivElement>(null);
+  const { height: wHeight } = useWindowDimensions();
 
   const [selectedGauge, setSelectedGauge] = useState("ADAMS.AF2295LQT");
   const [samples, setSamples] = useState(500);
@@ -21,18 +22,16 @@ const GraphPage = () => {
   });
 
   const getChartDimensions = () => ({
-    width: Math.max(300, wWidth - 64),
+    width: Math.max(300, (divRef.current?.clientWidth ?? 0) - 64),
     height: Math.max(200, wHeight * 0.6),
     margin: { top: 50, right: 50, bottom: 50, left: 50 },
   });
 
   const onSamplesChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    let value = event.target.value
-      .replace(/[^0-9.]/g, "")
-      .replace(/(\..*)\./g, "$1");
+    let value = event.target.value;
 
     if (isNaN(+value) || +value < 0) {
-      value = "0";
+      value = "100";
     }
 
     if (+value > 1000) {
@@ -69,7 +68,7 @@ const GraphPage = () => {
   };
 
   return (
-    <div>
+    <>
       <div className="flex flex-col items-center gap-4 bg-base-200 p-8 md:flex-row">
         <div className="w-full max-w-xs">
           <label className="label">
@@ -90,14 +89,22 @@ const GraphPage = () => {
         <div className="w-full max-w-xs">
           <label className="label">
             <span className="label-text">Samples</span>
+            <span className="label-text-alt italic">{samples}</span>
           </label>
           <input
-            type="text"
-            className="input-bordered input w-full"
+            type="range"
+            className="range"
             value={samples}
             onChange={onSamplesChange}
-            onFocus={(e) => e.target.select()}
+            min="100"
+            max="1000"
+            step="100"
           />
+          <div className="flex w-full justify-between px-2 text-xs">
+            {Array.from({ length: 10 }, (_, i) => (
+              <span key={i}>|</span>
+            ))}
+          </div>
         </div>
         <div className="w-full max-w-xs">
           <label className="label">
@@ -122,7 +129,8 @@ const GraphPage = () => {
           />
         </div>
       </div>
-      <div className="min-w-sm md:mt-16">
+
+      <div className="min-w-sm" ref={divRef}>
         <LineChart
           data={historyQuery.data?.readings.map((r) => ({
             date: r.timestamp,
@@ -131,7 +139,7 @@ const GraphPage = () => {
           dimensions={getChartDimensions()}
         />
       </div>
-    </div>
+    </>
   );
 };
 

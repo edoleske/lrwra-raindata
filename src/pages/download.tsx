@@ -57,8 +57,8 @@ const DownloadPage = () => {
     }
   };
 
-  return (
-    <div>
+  const Form = () => (
+    <div className="m-auto">
       <div className="w-full max-w-xs">
         <label className="label">
           <span className="label-text">Rain Gauge</span>
@@ -97,7 +97,14 @@ const DownloadPage = () => {
           onChange={onEndDateChange}
         />
       </div>
-      <div className="btn" onClick={onClick}>
+    </div>
+  );
+
+  return (
+    <div className="flex flex-col items-center justify-center gap-8 p-8 text-center lg:px-16">
+      <h1 className="text-4xl font-bold">Download Data</h1>
+      {Form()}
+      <div className="btn-primary btn" onClick={onClick}>
         Download
       </div>
     </div>
