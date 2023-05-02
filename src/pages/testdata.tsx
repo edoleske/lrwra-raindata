@@ -1,4 +1,4 @@
-import { format, sub } from "date-fns";
+import { format, parse, sub } from "date-fns";
 import { useState } from "react";
 import { api } from "~/utils/api";
 
@@ -61,7 +61,9 @@ const TestDataPage = () => {
             <input
               type="date"
               value={format(date, "yyyy-MM-dd")}
-              onChange={(e) => setDate(new Date(Date.parse(e.target.value)))}
+              onChange={(e) =>
+                setDate(parse(e.target.value, "yyyy-MM-dd", new Date()))
+              }
               className="input w-full max-w-xs"
             />
             <table className="my-4 table">

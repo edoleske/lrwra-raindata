@@ -1,5 +1,5 @@
 import { TRPCError } from "@trpc/server";
-import { add, format } from "date-fns";
+import { add, format, isToday } from "date-fns";
 import { z } from "zod";
 import { connection } from "~/server/db";
 import {
@@ -90,14 +90,14 @@ export const rainDataRouter = createTRPCRouter({
       handleError(err);
     }
   }),
-  // Gets the daily accured value for a given date, date must be before the current date
+  // Gets the daily accured value for a given date
   dateValues: publicProcedure
     .input(z.object({ date: z.date() }))
     .query(async ({ input }) => {
-      if (input.date >= today()) {
+      if (input.date > today()) {
         throw new TRPCError({
           code: "BAD_REQUEST",
-          message: "Input date must be before the current date.",
+          message: "Input date must be or be before the current date.",
         });
       }
 
@@ -123,14 +123,19 @@ export const rainDataRouter = createTRPCRouter({
         ADAMS.SD1942CAT.F_CV.VALUE, ADAMS.SD1942CAT.F_CV.QUALITY, 
         ADAMS.CP1942CAT.F_CV.VALUE, ADAMS.CP1942CAT.F_CV.QUALITY 
       FROM IHTREND 
-      WHERE TIMESTAMP >= '${format(
-        add(input.date, { days: 1 }),
-        "MM/dd/yyyy"
-      )}' AND TIMESTAMP < ${format(
-        add(input.date, { days: 2 }),
-        "MM/dd/yyyy"
-      )} AND samplingmode = interpolated 
-      ORDER BY TIMESTAMP ASC
+      ${
+        !isToday(input.date)
+          ? `WHERE TIMESTAMP >= '${format(
+              add(input.date, { days: 1 }),
+              "MM/dd/yyyy"
+            )}' AND TIMESTAMP < ${format(
+              add(input.date, { days: 2 }),
+              "MM/dd/yyyy"
+            )} AND`
+          : ""
+      }
+       samplingmode = interpolated 
+      ORDER BY TIMESTAMP ${isToday(input.date) ? "DESC" : "ASC"}
     `;
       try {
         const result = await connection.query(queryString);

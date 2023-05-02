@@ -36,8 +36,8 @@ const Layout = ({ children }: LayoutProps) => {
             </li>
             <li>
               <Link
-                href="/testdata"
-                className={router.asPath === "/testdata" ? "active" : ""}
+                href="/table"
+                className={router.asPath === "/table" ? "active" : ""}
               >
                 Table
               </Link>

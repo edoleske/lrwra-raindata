@@ -25,6 +25,7 @@ const AppNavbar = ({ menuOpen, onMenuOpen }: AppNavbarProps) => {
         target="_blank"
         rel="noopener noreferrer"
         className="ml-2"
+        title="LRWRA Home"
       >
         <Image
           src="/LRWRA_LogoColor.png"
