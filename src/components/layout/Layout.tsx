@@ -1,6 +1,8 @@
+import { useTheme } from "next-themes";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useState } from "react";
+import { MdOutlineDarkMode, MdOutlineLightMode } from "react-icons/md";
 import AppNavbar from "~/components/layout/AppNavbar";
 
 interface LayoutProps {
@@ -9,6 +11,8 @@ interface LayoutProps {
 
 const Layout = ({ children }: LayoutProps) => {
   const router = useRouter();
+
+  const { theme, setTheme } = useTheme();
 
   const [drawerOpen, setDrawerOpen] = useState(false);
 
@@ -58,6 +62,16 @@ const Layout = ({ children }: LayoutProps) => {
                 Download
               </Link>
             </li>
+            <label className="swap-rotate swap btn-ghost btn-circle btn mt-auto">
+              <input
+                type="checkbox"
+                onChange={() =>
+                  setTheme(theme === "corporate" ? "business" : "corporate")
+                }
+              />
+              <MdOutlineLightMode className="swap-on" size={26} />
+              <MdOutlineDarkMode className="swap-off" size={26} />
+            </label>
           </ul>
         </div>
       </div>
