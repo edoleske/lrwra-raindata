@@ -9,6 +9,7 @@ const server = z.object({
   IHIST_DB_USER: z.string(),
   IHIST_DB_PASSWORD: z.string(),
   IHIST_DB_SOURCE: z.string(),
+  PORT: z.string(),
 });
 
 /**
@@ -30,6 +31,7 @@ const processEnv = {
   IHIST_DB_USER: process.env.IHIST_DB_USER,
   IHIST_DB_PASSWORD: process.env.IHIST_DB_PASSWORD,
   IHIST_DB_SOURCE: process.env.IHIST_DB_SOURCE,
+  PORT: process.env.PORT,
   // NEXT_PUBLIC_CLIENTVAR: process.env.NEXT_PUBLIC_CLIENTVAR,
 };
 
