@@ -49,9 +49,11 @@ const TablePage = () => {
 
   return (
     <div className="p-8 lg:p-16">
-      <h1 className="mb-6 text-center text-4xl font-bold">Values by Date</h1>
       <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
         <div className="m-auto h-full w-full max-w-xs">
+          <h1 className="mb-6 text-center text-4xl font-bold">
+            Values by Date
+          </h1>
           <label className="label">
             <span className="label-text">Date</span>
           </label>

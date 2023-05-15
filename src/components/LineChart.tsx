@@ -1,6 +1,7 @@
 import { type RefObject, useEffect, useRef } from "react";
 import * as d3 from "d3";
 import { multiTimeFormat } from "~/utils/constants";
+import { format } from "date-fns";
 
 interface LineChartProps {
   data: ChartDataPoint[] | undefined;
@@ -22,10 +23,10 @@ const drawGraph = (
   const boundedHeight =
     dimensions.height - dimensions.margin.top - dimensions.margin.bottom;
 
-  const timeExtent = [
-    Math.min(...data.map((d) => d.date.getTime())),
-    Math.max(...data.map((d) => d.date.getTime())),
-  ];
+  const timeDomain = data.map((d) => d.date.getTime());
+  const minTime = Math.min(...timeDomain);
+  const maxTime = Math.max(...timeDomain);
+  const timeExtent = [minTime, maxTime];
 
   const xScale = d3
     .scaleTime()
@@ -91,6 +92,71 @@ const drawGraph = (
         .y((d) => yScale(d.value))
         .curve(d3.curveMonotoneX)
     );
+
+  // Mouse functionality
+  const mouseG = group
+    .append("g")
+    .classed("mouse", true)
+    .style("display", "none");
+  mouseG
+    .append("rect")
+    .attr("width", 2)
+    .attr("x", -1)
+    .attr("y", dimensions.margin.top)
+    .attr("height", boundedHeight)
+    .attr("fill", "lightgray");
+  mouseG
+    .append("circle")
+    .attr("r", 3)
+    .attr("class", "stroke-accent fill-accent");
+  mouseG
+    .append("text")
+    .attr("x", 4)
+    .attr("y", dimensions.margin.top - 10)
+    .attr("font-size", "0.9em");
+
+  svg.on("mouseover", () => {
+    mouseG.style("display", "block");
+  });
+
+  svg.on("mousemove", (mouse) => {
+    const [x] = d3.pointer(mouse);
+
+    // We must find the closest date point to the pointer, via the date key
+    // To tie the dates with the mouse position on the chart, we take the normalized mouse position and compare it to the normalized dates in the domain
+    const ratio = (x - dimensions.margin.left) / boundedWidth;
+    const dataKeyRatios = data.map(
+      (d) => (d.date.getTime() - minTime) / (maxTime - minTime)
+    );
+    const dataKeyRatioDeltas = dataKeyRatios.map((dr) => Math.abs(dr - ratio));
+    const dataIndex = dataKeyRatioDeltas.indexOf(
+      Math.min(...dataKeyRatioDeltas)
+    );
+    const closestDataPoint = data[dataIndex];
+
+    // This will always be true, makes typescript happy
+    if (closestDataPoint) {
+      mouseG.attr(
+        "transform",
+        `translate(${xScale(closestDataPoint.date)},${0})`
+      );
+      mouseG
+        .select("text")
+        .text(
+          `${format(
+            closestDataPoint.date,
+            "MMM d"
+          )}, ${closestDataPoint.value.toFixed(2)}"`
+        )
+        .attr("text-anchor", dataIndex <= data.length / 2 ? "start" : "end")
+        .attr("class", "stroke-base-content");
+      mouseG.select("circle").attr("cy", yScale(closestDataPoint.value));
+    }
+  });
+
+  svg.on("mouseout", () => {
+    mouseG.style("display", "none");
+  });
 };
 
 const clearGraph = (svgRef: RefObject<SVGSVGElement>) => {
