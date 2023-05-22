@@ -152,6 +152,52 @@ export const rainDataRouter = createTRPCRouter({
         handleError(err);
       }
     }),
+  valueTotal: publicProcedure
+    .input(z.object({ startDate: z.date(), endDate: z.date() }))
+    .query(async ({ input }) => {
+      const queryString = `
+        SELECT
+          timestamp,
+          ADAMS.AF2295LQT.F_CV.VALUE, ADAMS.AF2295LQT.F_CV.QUALITY,
+        FOURCHE.FC2295LQT.F_CV.VALUE, FOURCHE.FC2295LQT.F_CV.QUALITY, 
+        ADAMS.CAB2295LQT.F_CV.VALUE, ADAMS.CAB2295LQT.F_CV.QUALITY, 
+        ADAMS.AS1941CAT.F_CV.VALUE, ADAMS.AS1941CAT.F_CV.QUALITY, 
+        ADAMS.CR1941LQT.F_CV.VALUE, ADAMS.CR1941LQT.F_CV.QUALITY, 
+        ADAMS.CV1942CAT.F_CV.VALUE, ADAMS.CV1942CAT.F_CV.QUALITY, 
+        ADAMS.HR1942CAT.F_CV.VALUE, ADAMS.HR1942CAT.F_CV.QUALITY, 
+        ADAMS.JR1941CAT.F_CV.VALUE, ADAMS.JR1941CAT.F_CV.QUALITY, 
+        MAUMELLE.LM1941CAT.F_CV.VALUE, MAUMELLE.LM1941CAT.F_CV.QUALITY,
+        ADAMS.RR1942CAT.F_CV.VALUE, ADAMS.RR1942CAT.F_CV.QUALITY, 
+        ADAMS.LF1941CAT.F_CV.VALUE, ADAMS.LF1941CAT.F_CV.QUALITY, 
+        ADAMS.OC1941CAT.F_CV.VALUE, ADAMS.OC1941CAT.F_CV.QUALITY, 
+        ADAMS.PF2295LQT.F_CV.VALUE, ADAMS.PF2295LQT.F_CV.QUALITY, 
+        ADAMS.TS1941CAT.F_CV.VALUE, ADAMS.TS1941CAT.F_CV.QUALITY, 
+        ADAMS.CM1942CAT.F_CV.VALUE, ADAMS.CM1942CAT.F_CV.QUALITY, 
+        ADAMS.SW1942CAT.F_CV.VALUE, ADAMS.SW1942CAT.F_CV.QUALITY, 
+        ADAMS.SD1942CAT.F_CV.VALUE, ADAMS.SD1942CAT.F_CV.QUALITY, 
+        ADAMS.CP1942CAT.F_CV.VALUE, ADAMS.CP1942CAT.F_CV.QUALITY 
+        FROM IHTREND
+        WHERE samplingmode = 'calculated' AND 
+          calculationmode = 'total' AND 
+          timestamp >= '${format(input.startDate, "MM/dd/yyyy HH:mm:ss")}' AND 
+          timestamp <= '${format(input.endDate, "MM/dd/yyyy HH:mm:ss")}'
+      `;
+      try {
+        const result = await connection.query(queryString);
+        assertHistorianValuesAll(result);
+        // console.log(result.slice(0, 10));
+
+        const dbValues = result[0];
+        if (dbValues === undefined) {
+          throw new Error("No data returned from database!");
+        }
+
+        const values = parseDatabaseValues(dbValues);
+        return values;
+      } catch (err) {
+        handleError(err);
+      }
+    }),
   interpolatedSamples: publicProcedure
     .input(
       z.object({

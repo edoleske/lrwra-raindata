@@ -1,73 +1,37 @@
-import { format, parse } from "date-fns";
 import { useState } from "react";
-import { api } from "~/utils/api";
-import { today } from "~/utils/utils";
+import CustomTotalTable from "~/components/table/CustomTotalTable";
+import DayTotalTable from "~/components/table/DayTotalTable";
 
 const TablePage = () => {
-  const [date, setDate] = useState(today());
+  const [tableType, setTableType] = useState(0);
 
-  const historyValues = api.raindata.dateValues.useQuery({
-    date: date,
-  });
-
-  if (historyValues.isError) {
-    return (
-      <div>
-        <p>Encountered an error!</p>
-      </div>
-    );
-  }
-
-  const DataTable = () => {
-    if (!historyValues.data) {
-      return (
-        <div className="spinner spinner-primary spinner-xl m-auto mt-8"></div>
-      );
+  const TabContent = () => {
+    if (tableType === 0) {
+      return <DayTotalTable />;
+    } else if (tableType === 1) {
+      return <CustomTotalTable />;
+    } else {
+      return <p>You broke it!</p>;
     }
-
-    return (
-      <table className="table-zebra table-compact m-auto table w-full ">
-        <thead>
-          <tr>
-            <th>Gauge</th>
-            <th>Value (inches)</th>
-          </tr>
-        </thead>
-        <tbody>
-          {historyValues.data.values.readings.map((reading) => (
-            <tr key={reading.label}>
-              <td>{reading.label}</td>
-              <td>
-                {reading.value === 0 ? 0 : reading.value.toFixed(2)}&quot;
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    );
   };
 
   return (
     <div className="p-8 lg:p-16">
-      <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
-        <div className="m-auto h-full w-full max-w-xs">
-          <h1 className="mb-6 text-center text-4xl font-bold">
-            Values by Date
-          </h1>
-          <label className="label">
-            <span className="label-text">Date</span>
-          </label>
-          <input
-            type="date"
-            className="input-bordered input w-full"
-            value={format(date, "yyyy-MM-dd")}
-            onChange={(event) =>
-              setDate(parse(event.target.value, "yyyy-MM-dd", new Date()))
-            }
-          />
-        </div>
-        {DataTable()}
+      <div className="tabs mb-4">
+        <a
+          className={`tab-bordered tab ${tableType === 0 ? "tab-active" : ""}`}
+          onClick={() => setTableType(0)}
+        >
+          Day Total
+        </a>
+        <a
+          className={`tab-bordered tab ${tableType === 1 ? "tab-active" : ""}`}
+          onClick={() => setTableType(1)}
+        >
+          Custom Total
+        </a>
       </div>
+      {TabContent()}
     </div>
   );
 };
