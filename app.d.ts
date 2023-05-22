@@ -3,13 +3,12 @@ interface AllGaugeValues {
   readings: {
     label: string;
     value: number;
-    quality: string;
   }[];
 }
 
 interface SingleGaugeHistory {
   label: string;
-  readings: { timestamp: Date; value: number; quality: string }[];
+  readings: { timestamp: Date; value: number }[];
 }
 
 interface ChartDataPoint {
