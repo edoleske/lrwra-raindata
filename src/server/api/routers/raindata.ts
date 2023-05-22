@@ -230,6 +230,18 @@ export const rainDataRouter = createTRPCRouter({
         assertHistorianValuesSingle(result, input.gauge);
 
         const history = parseDatabaseHistory(result, input.gauge);
+        history.readings = history.readings.map((reading, index, array) => {
+          const lastValue = array[index - 1]?.value;
+          const newValue = lastValue
+            ? reading.value - lastValue
+            : reading.value;
+          return {
+            timestamp: reading.timestamp,
+            quality: reading.quality,
+            value: newValue < 0 ? 0 : newValue,
+          };
+        });
+
         return history;
       } catch (err) {
         handleError(err);

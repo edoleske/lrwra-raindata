@@ -145,7 +145,7 @@ const drawGraph = (
         .text(
           `${format(
             closestDataPoint.date,
-            "MMM d"
+            "MMM d, hh:mm a"
           )}, ${closestDataPoint.value.toFixed(2)}"`
         )
         .attr("text-anchor", dataIndex <= data.length / 2 ? "start" : "end")
