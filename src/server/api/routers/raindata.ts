@@ -13,19 +13,7 @@ import {
 } from "~/utils/utils";
 import { createTRPCRouter, publicProcedure } from "../trpc";
 import { RainGauges } from "~/utils/constants";
-
-const handleError = (error: unknown) => {
-  // String(err) works for all errors except for database errors
-  // JSON.stringify gives more info on why iHistorian's OLEDB provider errored
-  const parsedJSON = JSON.stringify(error);
-  const message = parsedJSON === "{}" ? String(error) : parsedJSON;
-
-  throw new TRPCError({
-    code: "INTERNAL_SERVER_ERROR",
-    message: message,
-    cause: error,
-  });
-};
+import { handleError, normalizeValues } from "~/server/api/utils";
 
 export const rainDataRouter = createTRPCRouter({
   // This endpoint is for testing queries
@@ -155,45 +143,56 @@ export const rainDataRouter = createTRPCRouter({
   valueTotal: publicProcedure
     .input(z.object({ startDate: z.date(), endDate: z.date() }))
     .query(async ({ input }) => {
-      const queryString = `
-        SELECT
-          timestamp,
-          ADAMS.AF2295LQT.F_CV.VALUE, ADAMS.AF2295LQT.F_CV.QUALITY,
-        FOURCHE.FC2295LQT.F_CV.VALUE, FOURCHE.FC2295LQT.F_CV.QUALITY, 
-        ADAMS.CAB2295LQT.F_CV.VALUE, ADAMS.CAB2295LQT.F_CV.QUALITY, 
-        ADAMS.AS1941CAT.F_CV.VALUE, ADAMS.AS1941CAT.F_CV.QUALITY, 
-        ADAMS.CR1941LQT.F_CV.VALUE, ADAMS.CR1941LQT.F_CV.QUALITY, 
-        ADAMS.CV1942CAT.F_CV.VALUE, ADAMS.CV1942CAT.F_CV.QUALITY, 
-        ADAMS.HR1942CAT.F_CV.VALUE, ADAMS.HR1942CAT.F_CV.QUALITY, 
-        ADAMS.JR1941CAT.F_CV.VALUE, ADAMS.JR1941CAT.F_CV.QUALITY, 
-        MAUMELLE.LM1941CAT.F_CV.VALUE, MAUMELLE.LM1941CAT.F_CV.QUALITY,
-        ADAMS.RR1942CAT.F_CV.VALUE, ADAMS.RR1942CAT.F_CV.QUALITY, 
-        ADAMS.LF1941CAT.F_CV.VALUE, ADAMS.LF1941CAT.F_CV.QUALITY, 
-        ADAMS.OC1941CAT.F_CV.VALUE, ADAMS.OC1941CAT.F_CV.QUALITY, 
-        ADAMS.PF2295LQT.F_CV.VALUE, ADAMS.PF2295LQT.F_CV.QUALITY, 
-        ADAMS.TS1941CAT.F_CV.VALUE, ADAMS.TS1941CAT.F_CV.QUALITY, 
-        ADAMS.CM1942CAT.F_CV.VALUE, ADAMS.CM1942CAT.F_CV.QUALITY, 
-        ADAMS.SW1942CAT.F_CV.VALUE, ADAMS.SW1942CAT.F_CV.QUALITY, 
-        ADAMS.SD1942CAT.F_CV.VALUE, ADAMS.SD1942CAT.F_CV.QUALITY, 
-        ADAMS.CP1942CAT.F_CV.VALUE, ADAMS.CP1942CAT.F_CV.QUALITY 
-        FROM IHTREND
-        WHERE samplingmode = 'calculated' AND 
-          calculationmode = 'total' AND 
-          timestamp >= '${format(input.startDate, "MM/dd/yyyy HH:mm:ss")}' AND 
-          timestamp <= '${format(input.endDate, "MM/dd/yyyy HH:mm:ss")}'
-      `;
-      try {
-        const result = await connection.query(queryString);
-        assertHistorianValuesAll(result);
-        // console.log(result.slice(0, 10));
+      const gaugeTotals: AllGaugeTotals = {
+        startDate: input.startDate,
+        endDate: input.endDate,
+        readings: [],
+      };
 
-        const dbValues = result[0];
-        if (dbValues === undefined) {
-          throw new Error("No data returned from database!");
+      const totalStart = performance.now();
+
+      try {
+        const queryString = `
+            SELECT 
+              ${RainGauges.map(
+                (gauge) => `${gauge}.F_CV.VALUE, ${gauge}.F_CV.QUALITY, `
+              ).join("")} timestamp
+            FROM IHTREND
+            WHERE samplingmode = 'interpolatedtoraw' AND 
+              numberofsamples = 1000 AND 
+              timestamp >= '${format(
+                input.startDate,
+                "MM/dd/yyyy HH:mm:ss"
+              )}' AND 
+              timestamp <= '${format(input.endDate, "MM/dd/yyyy HH:mm:ss")}'
+          `;
+
+        const result = await connection.query(queryString);
+
+        for (const gauge of RainGauges) {
+          const gaugeStart = performance.now();
+
+          assertHistorianValuesSingle(result, gauge);
+
+          const history = parseDatabaseHistory(result, gauge);
+          history.readings = normalizeValues(history.readings);
+
+          gaugeTotals.readings.push({
+            label: gauge,
+            value: history.readings.reduce(
+              (accumulator, value) => accumulator + value.value,
+              0
+            ),
+          });
+
+          const gaugeEnd = performance.now();
+          console.log(`Gauge ${gauge} took ${gaugeEnd - gaugeStart} ms`);
         }
 
-        const values = parseDatabaseValues(dbValues);
-        return values;
+        const totalEnd = performance.now();
+        console.log(`Total runtime: ${totalEnd - totalStart} ms`);
+
+        return gaugeTotals;
       } catch (err) {
         handleError(err);
       }
@@ -230,17 +229,7 @@ export const rainDataRouter = createTRPCRouter({
         assertHistorianValuesSingle(result, input.gauge);
 
         const history = parseDatabaseHistory(result, input.gauge);
-        history.readings = history.readings.map((reading, index, array) => {
-          const lastValue = array[index - 1]?.value;
-          const newValue = lastValue
-            ? reading.value - lastValue
-            : reading.value;
-          return {
-            timestamp: reading.timestamp,
-            quality: reading.quality,
-            value: newValue < 0 ? 0 : newValue,
-          };
-        });
+        history.readings = normalizeValues(history.readings);
 
         return history;
       } catch (err) {

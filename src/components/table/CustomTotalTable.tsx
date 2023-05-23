@@ -85,6 +85,11 @@ const CustomTotalTable = () => {
             }
           />
         </div>
+        <div className="alert alert-warning mx-auto mt-8 max-w-md shadow-lg">
+          <div>
+            <span>Warning! This view is inaccurate beyond a few days!</span>
+          </div>
+        </div>
       </div>
       {DataTable()}
     </div>

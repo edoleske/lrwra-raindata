@@ -1,15 +1,34 @@
+interface LabeledReading {
+  label: string;
+  value: number;
+  quality: string;
+}
+
 interface AllGaugeValues {
   timestamp: Date;
-  readings: {
-    label: string;
-    value: number;
-    quality: string;
-  }[];
+  readings: LabeledReading[];
+}
+
+interface GaugeTotal {
+  label: string;
+  value: number;
+}
+
+interface AllGaugeTotals {
+  startDate: Date;
+  endDate: Date;
+  readings: GaugeTotal[];
+}
+
+interface TimestampedReading {
+  timestamp: Date;
+  value: number;
+  quality: string;
 }
 
 interface SingleGaugeHistory {
   label: string;
-  readings: { timestamp: Date; value: number; quality: string }[];
+  readings: TimestampedReading[];
 }
 
 interface ChartDataPoint {
