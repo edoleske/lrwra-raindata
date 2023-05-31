@@ -6,9 +6,12 @@ const MonthTotalTable = () => {
   const [month, setMonth] = useState(
     parse("2023-05-11", "yyyy-MM-dd", new Date())
   );
+  const [queryMonth, setQueryMonth] = useState(
+    parse("2023-05-11", "yyyy-MM-dd", new Date())
+  );
 
   const historyValues = api.raindata.monthValues.useQuery({
-    month: month,
+    month: queryMonth,
   });
 
   if (historyValues.isError) {
@@ -18,6 +21,14 @@ const MonthTotalTable = () => {
       </div>
     );
   }
+
+  const onDateChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    let newDate = parse(event.target.value, "yyyy-MM-dd", new Date());
+    if (newDate >= new Date()) {
+      newDate = new Date();
+    }
+    setMonth(newDate);
+  };
 
   const DataTable = () => {
     if (!historyValues.data) {
@@ -62,10 +73,19 @@ const MonthTotalTable = () => {
             type="date"
             className="input-bordered input w-full"
             value={format(month, "yyyy-MM-dd")}
-            onChange={(event) =>
-              setMonth(parse(event.target.value, "yyyy-MM-dd", new Date()))
-            }
+            onChange={onDateChange}
           />
+        </div>
+        <div className="p-4"></div>
+        <div className="flex w-full justify-center">
+          <div
+            className={`btn-primary btn ${
+              month === queryMonth ? "btn-disabled" : ""
+            }`}
+            onClick={() => setQueryMonth(month)}
+          >
+            Update
+          </div>
         </div>
       </div>
       {DataTable()}

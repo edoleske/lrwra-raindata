@@ -5,6 +5,7 @@ import {
   addMonths,
   format,
   isBefore,
+  isThisMonth,
   isToday,
   startOfMonth,
 } from "date-fns";
@@ -123,6 +124,13 @@ export const rainDataRouter = createTRPCRouter({
   monthValues: publicProcedure
     .input(z.object({ month: z.date() }))
     .query(async ({ input }) => {
+      if (input.month >= startOfMonth(addMonths(new Date(), 1))) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "No data available for future months!",
+        });
+      }
+
       let queryString = `
         SELECT 
         ${RainGauges.map(
