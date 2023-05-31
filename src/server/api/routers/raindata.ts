@@ -1,5 +1,13 @@
 import { TRPCError } from "@trpc/server";
-import { add, format, isToday } from "date-fns";
+import {
+  add,
+  addDays,
+  addMonths,
+  format,
+  isBefore,
+  isToday,
+  startOfMonth,
+} from "date-fns";
 import { z } from "zod";
 import { connection } from "~/server/db";
 import {
@@ -39,25 +47,9 @@ export const rainDataRouter = createTRPCRouter({
   currentValues: publicProcedure.query(async () => {
     const queryString = `
       SELECT TOP 1
-        timestamp,
-        ADAMS.AF2295LQT.F_CV.VALUE, ADAMS.AF2295LQT.F_CV.QUALITY,
-        FOURCHE.FC2295LQT.F_CV.VALUE, FOURCHE.FC2295LQT.F_CV.QUALITY, 
-        ADAMS.CAB2295LQT.F_CV.VALUE, ADAMS.CAB2295LQT.F_CV.QUALITY, 
-        ADAMS.AS1941CAT.F_CV.VALUE, ADAMS.AS1941CAT.F_CV.QUALITY, 
-        ADAMS.CR1941LQT.F_CV.VALUE, ADAMS.CR1941LQT.F_CV.QUALITY, 
-        ADAMS.CV1942CAT.F_CV.VALUE, ADAMS.CV1942CAT.F_CV.QUALITY, 
-        ADAMS.HR1942CAT.F_CV.VALUE, ADAMS.HR1942CAT.F_CV.QUALITY, 
-        ADAMS.JR1941CAT.F_CV.VALUE, ADAMS.JR1941CAT.F_CV.QUALITY, 
-        MAUMELLE.LM1941CAT.F_CV.VALUE, MAUMELLE.LM1941CAT.F_CV.QUALITY,
-        ADAMS.RR1942CAT.F_CV.VALUE, ADAMS.RR1942CAT.F_CV.QUALITY, 
-        ADAMS.LF1941CAT.F_CV.VALUE, ADAMS.LF1941CAT.F_CV.QUALITY, 
-        ADAMS.OC1941CAT.F_CV.VALUE, ADAMS.OC1941CAT.F_CV.QUALITY, 
-        ADAMS.PF2295LQT.F_CV.VALUE, ADAMS.PF2295LQT.F_CV.QUALITY, 
-        ADAMS.TS1941CAT.F_CV.VALUE, ADAMS.TS1941CAT.F_CV.QUALITY, 
-        ADAMS.CM1942CAT.F_CV.VALUE, ADAMS.CM1942CAT.F_CV.QUALITY, 
-        ADAMS.SW1942CAT.F_CV.VALUE, ADAMS.SW1942CAT.F_CV.QUALITY, 
-        ADAMS.SD1942CAT.F_CV.VALUE, ADAMS.SD1942CAT.F_CV.QUALITY, 
-        ADAMS.CP1942CAT.F_CV.VALUE, ADAMS.CP1942CAT.F_CV.QUALITY 
+        ${RainGauges.map(
+          (gauge) => `${gauge}.F_CV.VALUE, ${gauge}.F_CV.QUALITY, `
+        ).join("")} timestamp
       FROM IHTREND 
       WHERE samplingmode = interpolated 
       ORDER BY TIMESTAMP DESC
@@ -89,42 +81,30 @@ export const rainDataRouter = createTRPCRouter({
         });
       }
 
-      const queryString = `
-      SELECT TOP 1
-        timestamp,
-        ADAMS.AF2295LQT.F_CV.VALUE, ADAMS.AF2295LQT.F_CV.QUALITY,
-        FOURCHE.FC2295LQT.F_CV.VALUE, FOURCHE.FC2295LQT.F_CV.QUALITY, 
-        ADAMS.CAB2295LQT.F_CV.VALUE, ADAMS.CAB2295LQT.F_CV.QUALITY, 
-        ADAMS.AS1941CAT.F_CV.VALUE, ADAMS.AS1941CAT.F_CV.QUALITY, 
-        ADAMS.CR1941LQT.F_CV.VALUE, ADAMS.CR1941LQT.F_CV.QUALITY, 
-        ADAMS.CV1942CAT.F_CV.VALUE, ADAMS.CV1942CAT.F_CV.QUALITY, 
-        ADAMS.HR1942CAT.F_CV.VALUE, ADAMS.HR1942CAT.F_CV.QUALITY, 
-        ADAMS.JR1941CAT.F_CV.VALUE, ADAMS.JR1941CAT.F_CV.QUALITY, 
-        MAUMELLE.LM1941CAT.F_CV.VALUE, MAUMELLE.LM1941CAT.F_CV.QUALITY,
-        ADAMS.RR1942CAT.F_CV.VALUE, ADAMS.RR1942CAT.F_CV.QUALITY, 
-        ADAMS.LF1941CAT.F_CV.VALUE, ADAMS.LF1941CAT.F_CV.QUALITY, 
-        ADAMS.OC1941CAT.F_CV.VALUE, ADAMS.OC1941CAT.F_CV.QUALITY, 
-        ADAMS.PF2295LQT.F_CV.VALUE, ADAMS.PF2295LQT.F_CV.QUALITY, 
-        ADAMS.TS1941CAT.F_CV.VALUE, ADAMS.TS1941CAT.F_CV.QUALITY, 
-        ADAMS.CM1942CAT.F_CV.VALUE, ADAMS.CM1942CAT.F_CV.QUALITY, 
-        ADAMS.SW1942CAT.F_CV.VALUE, ADAMS.SW1942CAT.F_CV.QUALITY, 
-        ADAMS.SD1942CAT.F_CV.VALUE, ADAMS.SD1942CAT.F_CV.QUALITY, 
-        ADAMS.CP1942CAT.F_CV.VALUE, ADAMS.CP1942CAT.F_CV.QUALITY 
-      FROM IHTREND 
-      ${
-        !isToday(input.date)
-          ? `WHERE TIMESTAMP >= '${format(
-              add(input.date, { days: 1 }),
-              "MM/dd/yyyy"
-            )}' AND TIMESTAMP < ${format(
-              add(input.date, { days: 2 }),
-              "MM/dd/yyyy"
-            )} AND`
-          : ""
-      }
-       samplingmode = interpolated 
-      ORDER BY TIMESTAMP ${isToday(input.date) ? "DESC" : "ASC"}
-    `;
+      const minDate = format(add(input.date, { days: 1 }), "MM/dd/yyyy");
+      const maxDate = format(add(input.date, { days: 2 }), "MM/dd/yyyy");
+
+      const queryString = isToday(input.date)
+        ? `
+        SELECT
+          ${RainGauges.map(
+            (gauge) => `${gauge}.F_CV.VALUE, ${gauge}.F_CV.QUALITY, `
+          ).join("")} timestamp
+        FROM IHTREND 
+        WHERE samplingmode = 'currentvalues'
+      `
+        : `
+        SELECT
+          ${RainGauges.map(
+            (gauge) => `${gauge}.F_CV.VALUE, ${gauge}.F_CV.QUALITY, `
+          ).join("")} timestamp
+        FROM IHTREND 
+        WHERE samplingmode = 'calculated' AND
+            calculationmode = 'max' AND
+            timestamp >= ${minDate} AND 
+            timestamp < ${maxDate}
+      `;
+
       try {
         const result = await connection.query(queryString);
         assertHistorianValuesAll(result);
@@ -136,6 +116,61 @@ export const rainDataRouter = createTRPCRouter({
 
         const values = parseDatabaseValues(dbValues);
         return { values };
+      } catch (err) {
+        handleError(err);
+      }
+    }),
+  monthValues: publicProcedure
+    .input(z.object({ month: z.date() }))
+    .query(async ({ input }) => {
+      let queryString = `
+        SELECT 
+        ${RainGauges.map(
+          (gauge) => `${gauge}.F_CV.VALUE, ${gauge}.F_CV.QUALITY, `
+        ).join("")} timestamp
+        FROM IHTREND
+        WHERE samplingmode = 'rawbytime' AND (
+      `;
+
+      const startOfCurrent = startOfMonth(input.month);
+      const startOfNext = addMonths(startOfCurrent, 1);
+      for (
+        let i = startOfMonth(input.month);
+        isBefore(i, startOfNext);
+        i = addDays(i, 1)
+      ) {
+        queryString += `(
+          TIMESTAMP >= '${format(i, "MM/dd/yyyy")} 23:59:59' AND 
+          TIMESTAMP <= '${format(i, "MM/dd/yyyy")} 23:59:59')`;
+      }
+      queryString += ")";
+
+      try {
+        const result = await connection.query(queryString);
+        assertHistorianValuesAll(result);
+        const parsedResult = result.map((r) => parseDatabaseValues(r));
+
+        const totals: AllGaugeTotals = {
+          startDate: startOfCurrent,
+          endDate: startOfNext,
+          readings: [],
+        };
+
+        if (result.length <= 0) {
+          throw new Error("No data returned from database!");
+        }
+
+        totals.readings = RainGauges.map((gauge) => ({
+          label: gauge,
+          value: parsedResult.reduce(
+            (previous, a) =>
+              previous +
+              (a.readings.find((r) => r.label === gauge)?.value ?? 0),
+            0
+          ),
+        }));
+
+        return { totals };
       } catch (err) {
         handleError(err);
       }
@@ -153,19 +188,19 @@ export const rainDataRouter = createTRPCRouter({
 
       try {
         const queryString = `
-            SELECT 
-              ${RainGauges.map(
-                (gauge) => `${gauge}.F_CV.VALUE, ${gauge}.F_CV.QUALITY, `
-              ).join("")} timestamp
-            FROM IHTREND
-            WHERE samplingmode = 'interpolatedtoraw' AND 
-              numberofsamples = 1000 AND 
-              timestamp >= '${format(
-                input.startDate,
-                "MM/dd/yyyy HH:mm:ss"
-              )}' AND 
-              timestamp <= '${format(input.endDate, "MM/dd/yyyy HH:mm:ss")}'
-          `;
+          SELECT 
+            ${RainGauges.map(
+              (gauge) => `${gauge}.F_CV.VALUE, ${gauge}.F_CV.QUALITY, `
+            ).join("")} timestamp
+          FROM IHTREND
+          WHERE samplingmode = 'interpolatedtoraw' AND 
+            numberofsamples = 1000 AND 
+            timestamp >= '${format(
+              input.startDate,
+              "MM/dd/yyyy HH:mm:ss"
+            )}' AND 
+            timestamp <= '${format(input.endDate, "MM/dd/yyyy HH:mm:ss")}'
+        `;
 
         const result = await connection.query(queryString);
 

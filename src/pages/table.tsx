@@ -1,6 +1,7 @@
 import { useState } from "react";
 import CustomTotalTable from "~/components/table/CustomTotalTable";
 import DayTotalTable from "~/components/table/DayTotalTable";
+import MonthTotalTable from "~/components/table/MonthTotalTable";
 
 const TablePage = () => {
   const [tableType, setTableType] = useState(0);
@@ -9,6 +10,8 @@ const TablePage = () => {
     if (tableType === 0) {
       return <DayTotalTable />;
     } else if (tableType === 1) {
+      return <MonthTotalTable />;
+    } else if (tableType === 2) {
       return <CustomTotalTable />;
     } else {
       return <p>You broke it!</p>;
@@ -27,6 +30,12 @@ const TablePage = () => {
         <a
           className={`tab-bordered tab ${tableType === 1 ? "tab-active" : ""}`}
           onClick={() => setTableType(1)}
+        >
+          Month Total
+        </a>
+        <a
+          className={`tab-bordered tab ${tableType === 2 ? "tab-active" : ""}`}
+          onClick={() => setTableType(2)}
         >
           Custom Total
         </a>
