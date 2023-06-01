@@ -1,3 +1,10 @@
+type AlertSeverity = "info" | "success" | "error" | "warning";
+
+type GlobalAlert = {
+  message: string;
+  severity: AlertSeverity;
+};
+
 interface LabeledReading {
   label: string;
   value: number;

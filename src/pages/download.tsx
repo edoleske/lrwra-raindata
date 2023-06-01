@@ -1,21 +1,27 @@
 import { add, compareAsc, format, parse, sub } from "date-fns";
 import { saveAs } from "file-saver";
-import { useState } from "react";
+import { useContext, useState } from "react";
+import { GlobalAlertContext } from "~/components/globalAlerts/GlobalAlertProvider";
 import { api } from "~/utils/api";
 import { RainGauges } from "~/utils/constants";
 
 const DownloadPage = () => {
+  const addAlert = useContext(GlobalAlertContext);
+
   const [selectedGauge, setSelectedGauge] = useState("ADAMS.AF2295LQT");
   const [startDate, setStartDate] = useState(sub(new Date(), { days: 2 }));
   const [endDate, setEndDate] = useState(new Date());
   const fileMutation = api.raindata.downloadCSV.useMutation();
 
   const onClick = async () => {
-    const result = await fileMutation.mutateAsync({
-      gauge: selectedGauge,
-      startDate: startDate,
-      endDate: endDate,
-    });
+    const result = await fileMutation.mutateAsync(
+      {
+        gauge: selectedGauge,
+        startDate: startDate,
+        endDate: endDate,
+      },
+      { onError: (error) => addAlert(error.message, "error") }
+    );
 
     if (result) {
       const filename =
