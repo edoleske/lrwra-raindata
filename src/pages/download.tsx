@@ -106,9 +106,27 @@ const DownloadPage = () => {
     </div>
   );
 
+  if (fileMutation.isLoading) {
+    return (
+      <div className="w-full p-8 text-center">
+        <h1 className="mb-8 text-4xl font-bold">Download Data</h1>
+        <div className="spinner spinner-xl spinner-primary m-auto"></div>
+      </div>
+    );
+  }
+
   return (
-    <div className="flex flex-col items-center justify-center gap-8 p-8 text-center lg:px-16">
+    <div className="mx-auto flex max-w-2xl flex-col items-center justify-center gap-8 p-8 text-center lg:px-16">
       <h1 className="text-4xl font-bold">Download Data</h1>
+      <p>
+        Download a CSV (Comma-separate values) file with raw data from one of
+        our rain gauges.
+      </p>
+      <p>
+        Our gauges report a single floating-point value every second
+        representing the amount of rain measured that day in inches. The value
+        is reset at the beginning of everyday.
+      </p>
       {Form()}
       <div className="btn-primary btn" onClick={onClick}>
         Download
