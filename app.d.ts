@@ -48,3 +48,10 @@ interface ChartDimensions {
   height: number;
   margin: { top: number; right: number; bottom: number; left: number };
 }
+
+interface GraphQueryInput {
+  gauge: string;
+  samples: number;
+  startDate: Date;
+  endDate: Date;
+}
