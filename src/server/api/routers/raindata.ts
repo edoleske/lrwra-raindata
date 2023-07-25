@@ -17,11 +17,13 @@ import {
 import {
   parseDatabaseHistory,
   parseDatabaseValues,
+  pureDate,
   today,
 } from "~/utils/utils";
 import { createTRPCRouter, publicProcedure } from "../trpc";
 import { RainGauges } from "~/utils/constants";
 import { handleError, normalizeValues } from "~/server/api/utils";
+import { getRawData } from "../queries";
 
 export const rainDataRouter = createTRPCRouter({
   // This endpoint is for testing queries
@@ -284,24 +286,17 @@ export const rainDataRouter = createTRPCRouter({
         gauge: z.string(),
         startDate: z.date(),
         endDate: z.date(),
+        frequency: z.number().nullable(),
       })
     )
     .mutation(async ({ input }) => {
-      const queryString = `
-        SELECT
-          timestamp, ${input.gauge}.F_CV.VALUE, ${input.gauge}.F_CV.QUALITY,
-        FROM IHTREND
-        WHERE samplingmode = interpolated AND 
-          intervalmilliseconds = 60000 AND 
-          timestamp >= '${format(input.startDate, "MM/dd/yyyy HH:mm:00")}' AND 
-          timestamp <= '${format(input.endDate, "MM/dd/yyyy HH:mm:00")}'
-        ORDER BY TIMESTAMP
-      `;
-
       try {
-        const result = await connection.query(queryString);
-        assertHistorianValuesSingle(result, input.gauge);
-
+        const result = await getRawData(
+          input.gauge,
+          pureDate(input.startDate),
+          input.endDate,
+          input.frequency ? input.frequency : 1
+        );
         const history = parseDatabaseHistory(result, input.gauge);
 
         // Generate CSV file as string

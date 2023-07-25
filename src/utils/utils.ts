@@ -10,6 +10,15 @@ export const today = () => {
   return result;
 };
 
+// Utility function to get new Date object with time zeroed out
+export const pureDate = (d: Date) => {
+  d.setHours(0);
+  d.setMinutes(0);
+  d.setSeconds(0);
+  d.setMilliseconds(0);
+  return d;
+};
+
 // This function parses response from IHistorian with a value for every gauge
 export const parseDatabaseValues = (dbValues: IHistValues): AllGaugeValues => {
   return {

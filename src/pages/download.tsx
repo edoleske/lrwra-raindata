@@ -11,6 +11,7 @@ const DownloadPage = () => {
   const [selectedGauge, setSelectedGauge] = useState("ADAMS.AF2295LQT");
   const [startDate, setStartDate] = useState(sub(new Date(), { days: 2 }));
   const [endDate, setEndDate] = useState(new Date());
+  const [frequency, setFrequency] = useState(1);
   const fileMutation = api.raindata.downloadCSV.useMutation();
 
   const onClick = async () => {
@@ -19,6 +20,7 @@ const DownloadPage = () => {
         gauge: selectedGauge,
         startDate: startDate,
         endDate: endDate,
+        frequency: frequency,
       },
       { onError: (error) => addAlert(error.message, "error") }
     );
@@ -102,6 +104,23 @@ const DownloadPage = () => {
           value={format(endDate, "yyyy-MM-dd")}
           onChange={onEndDateChange}
         />
+      </div>
+      <div className="w-full max-w-xs">
+        <label className="label">
+          <span className="label-text">Sample Frequency</span>
+        </label>
+        <select
+          className="select-bordered select w-full"
+          value={frequency}
+          onChange={(e) => setFrequency(+e.currentTarget.value)}
+        >
+          <option value={1}>Every minute</option>
+          <option value={5}>Every 5 minutes</option>
+          <option value={10}>Every 10 minutes</option>
+          <option value={15}>Every 15 minutes</option>
+          <option value={30}>Every 30 minutes</option>
+          <option value={60}>Every hour</option>
+        </select>
       </div>
     </div>
   );
