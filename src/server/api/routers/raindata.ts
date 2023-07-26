@@ -193,8 +193,6 @@ export const rainDataRouter = createTRPCRouter({
         readings: [],
       };
 
-      const totalStart = performance.now();
-
       try {
         const queryString = `
           SELECT 
@@ -214,8 +212,6 @@ export const rainDataRouter = createTRPCRouter({
         const result = await connection.query(queryString);
 
         for (const gauge of RainGauges) {
-          const gaugeStart = performance.now();
-
           assertHistorianValuesSingle(result, gauge);
 
           const history = parseDatabaseHistory(result, gauge);
@@ -228,13 +224,7 @@ export const rainDataRouter = createTRPCRouter({
               0
             ),
           });
-
-          const gaugeEnd = performance.now();
-          console.log(`Gauge ${gauge} took ${gaugeEnd - gaugeStart} ms`);
         }
-
-        const totalEnd = performance.now();
-        console.log(`Total runtime: ${totalEnd - totalStart} ms`);
 
         return gaugeTotals;
       } catch (err) {
