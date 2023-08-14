@@ -3,7 +3,7 @@ import { saveAs } from "file-saver";
 import { useContext, useState } from "react";
 import { GlobalAlertContext } from "~/components/globalAlerts/GlobalAlertProvider";
 import { api } from "~/utils/api";
-import { RainGauges } from "~/utils/constants";
+import { RainGaugeData } from "~/utils/constants";
 
 const DownloadPage = () => {
   const addAlert = useContext(GlobalAlertContext);
@@ -76,9 +76,9 @@ const DownloadPage = () => {
           value={selectedGauge}
           onChange={(e) => setSelectedGauge(e.target.value)}
         >
-          {RainGauges.map((gauge, index) => (
-            <option key={index} value={gauge}>
-              {gauge}
+          {RainGaugeData.map((gauge, index) => (
+            <option key={index} value={gauge.tag}>
+              {gauge.label}
             </option>
           ))}
         </select>

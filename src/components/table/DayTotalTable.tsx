@@ -1,7 +1,7 @@
 import { format, parse } from "date-fns";
 import { useState } from "react";
 import { api } from "~/utils/api";
-import { today } from "~/utils/utils";
+import { getRainGaugeLabel, today } from "~/utils/utils";
 
 const DayTotalTable = () => {
   const [date, setDate] = useState(today());
@@ -36,7 +36,7 @@ const DayTotalTable = () => {
         <tbody>
           {historyValues.data.values.readings.map((reading) => (
             <tr key={reading.label}>
-              <td>{reading.label}</td>
+              <td>{getRainGaugeLabel(reading.label)}</td>
               <td>
                 {reading.value === 0 ? 0 : reading.value.toFixed(2)}&quot;
               </td>

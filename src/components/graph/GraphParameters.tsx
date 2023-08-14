@@ -1,6 +1,6 @@
 import { add, compareAsc, format, isSameDay, parse, sub } from "date-fns";
 import { useState } from "react";
-import { RainGauges } from "~/utils/constants";
+import { RainGaugeData } from "~/utils/constants";
 
 interface GraphParametersProps {
   queryInput: GraphQueryInput;
@@ -85,9 +85,9 @@ const GraphParameters = ({
           value={selectedGauge}
           onChange={(e) => setSelectedGauge(e.target.value)}
         >
-          {RainGauges.map((gauge, index) => (
-            <option key={index} value={gauge}>
-              {gauge}
+          {RainGaugeData.map((gauge, index) => (
+            <option key={index} value={gauge.tag}>
+              {gauge.label}
             </option>
           ))}
         </select>

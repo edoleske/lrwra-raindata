@@ -1,6 +1,6 @@
 // When we get query results via node-adodb, we need to parse the results into known types for validation
 
-import { RainGauges } from "~/utils/constants";
+import { RainGaugeData } from "~/utils/constants";
 
 export function assertHistorianValuesAll(
   input: unknown
@@ -16,9 +16,9 @@ export function assertHistorianValuesAll(
       throw new Error("IHistorian values object missing timestamp");
     }
 
-    RainGauges.forEach((gauge) => {
-      const valueKey = `${gauge}.F_CV.Value`;
-      const qualityKey = `${gauge}.F_CV.Quality`;
+    RainGaugeData.forEach((gauge) => {
+      const valueKey = `${gauge.tag}.F_CV.Value`;
+      const qualityKey = `${gauge.tag}.F_CV.Quality`;
 
       // All values are optional, so check if defined ones are ok
       const value = (element as IHistValues)[valueKey];
@@ -27,20 +27,20 @@ export function assertHistorianValuesAll(
       if (value !== undefined) {
         if (quality === undefined) {
           throw new Error(
-            `IHistorian missing quality but has value for gauge ${gauge}`
+            `IHistorian missing quality but has value for gauge ${gauge.tag}`
           );
         }
 
         if (isNaN(+value)) {
           throw new Error(
-            `IHistorian values object value for gauge ${gauge} is NaN!`
+            `IHistorian values object value for gauge ${gauge.tag} is NaN!`
           );
         }
       }
 
       if (quality !== undefined && value === undefined) {
         throw new Error(
-          `IHistorian values object missing value but has quality for gauge ${gauge}`
+          `IHistorian values object missing value but has quality for gauge ${gauge.tag}`
         );
       }
     });

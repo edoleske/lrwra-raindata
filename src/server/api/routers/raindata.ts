@@ -21,7 +21,7 @@ import {
   today,
 } from "~/utils/utils";
 import { createTRPCRouter, publicProcedure } from "../trpc";
-import { RainGauges } from "~/utils/constants";
+import { RainGaugeData } from "~/utils/constants";
 import { handleError, normalizeValues } from "~/server/api/utils";
 import { getRawData } from "../queries";
 
@@ -49,8 +49,8 @@ export const rainDataRouter = createTRPCRouter({
   currentValues: publicProcedure.query(async () => {
     const queryString = `
       SELECT TOP 1
-        ${RainGauges.map(
-          (gauge) => `${gauge}.F_CV.VALUE, ${gauge}.F_CV.QUALITY, `
+        ${RainGaugeData.map(
+          (gauge) => `${gauge.tag}.F_CV.VALUE, ${gauge.tag}.F_CV.QUALITY, `
         ).join("")} timestamp
       FROM IHTREND 
       WHERE samplingmode = interpolated 
@@ -89,16 +89,16 @@ export const rainDataRouter = createTRPCRouter({
       const queryString = isToday(input.date)
         ? `
         SELECT
-          ${RainGauges.map(
-            (gauge) => `${gauge}.F_CV.VALUE, ${gauge}.F_CV.QUALITY, `
+          ${RainGaugeData.map(
+            (gauge) => `${gauge.tag}.F_CV.VALUE, ${gauge.tag}.F_CV.QUALITY, `
           ).join("")} timestamp
         FROM IHTREND 
         WHERE samplingmode = 'currentvalues'
       `
         : `
         SELECT
-          ${RainGauges.map(
-            (gauge) => `${gauge}.F_CV.VALUE, ${gauge}.F_CV.QUALITY, `
+          ${RainGaugeData.map(
+            (gauge) => `${gauge.tag}.F_CV.VALUE, ${gauge.tag}.F_CV.QUALITY, `
           ).join("")} timestamp
         FROM IHTREND 
         WHERE samplingmode = 'calculated' AND
@@ -134,8 +134,8 @@ export const rainDataRouter = createTRPCRouter({
 
       let queryString = `
         SELECT 
-        ${RainGauges.map(
-          (gauge) => `${gauge}.F_CV.VALUE, ${gauge}.F_CV.QUALITY, `
+        ${RainGaugeData.map(
+          (gauge) => `${gauge.tag}.F_CV.VALUE, ${gauge.tag}.F_CV.QUALITY, `
         ).join("")} timestamp
         FROM IHTREND
         WHERE samplingmode = 'rawbytime' AND (
@@ -169,12 +169,12 @@ export const rainDataRouter = createTRPCRouter({
           throw new Error("No data returned from database!");
         }
 
-        totals.readings = RainGauges.map((gauge) => ({
-          label: gauge,
+        totals.readings = RainGaugeData.map((gauge) => ({
+          label: gauge.tag,
           value: parsedResult.reduce(
             (previous, a) =>
               previous +
-              (a.readings.find((r) => r.label === gauge)?.value ?? 0),
+              (a.readings.find((r) => r.label === gauge.tag)?.value ?? 0),
             0
           ),
         }));
@@ -196,8 +196,8 @@ export const rainDataRouter = createTRPCRouter({
       try {
         const queryString = `
           SELECT 
-            ${RainGauges.map(
-              (gauge) => `${gauge}.F_CV.VALUE, ${gauge}.F_CV.QUALITY, `
+            ${RainGaugeData.map(
+              (gauge) => `${gauge.tag}.F_CV.VALUE, ${gauge.tag}.F_CV.QUALITY, `
             ).join("")} timestamp
           FROM IHTREND
           WHERE samplingmode = 'interpolatedtoraw' AND 
@@ -211,7 +211,7 @@ export const rainDataRouter = createTRPCRouter({
 
         const result = await connection.query(queryString);
 
-        for (const gauge of RainGauges) {
+        for (const gauge of RainGaugeData.map((rg) => rg.tag)) {
           assertHistorianValuesSingle(result, gauge);
 
           const history = parseDatabaseHistory(result, gauge);
@@ -241,7 +241,7 @@ export const rainDataRouter = createTRPCRouter({
       })
     )
     .query(async ({ input }) => {
-      if (!RainGauges.includes(input.gauge)) {
+      if (!RainGaugeData.map((rg) => rg.tag).includes(input.gauge)) {
         throw new TRPCError({
           code: "BAD_REQUEST",
           message: `${input.gauge} is not a recognized rain gauge.`,

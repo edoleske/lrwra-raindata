@@ -1,6 +1,7 @@
 import { format, parse } from "date-fns";
 import { useState } from "react";
 import { api } from "~/utils/api";
+import { getRainGaugeLabel } from "~/utils/utils";
 
 const MonthTotalTable = () => {
   const [month, setMonth] = useState(
@@ -48,7 +49,7 @@ const MonthTotalTable = () => {
         <tbody>
           {historyValues.data.totals.readings.map((reading) => (
             <tr key={reading.label}>
-              <td>{reading.label}</td>
+              <td>{getRainGaugeLabel(reading.label)}</td>
               <td>
                 {reading.value === 0 ? 0 : reading.value.toFixed(2)}&quot;
               </td>
