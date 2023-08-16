@@ -4,7 +4,7 @@ import { api } from "~/utils/api";
 import { today } from "~/utils/utils";
 
 const CustomTotalTable = () => {
-  const [startDate, setStartDate] = useState(sub(today(), { days: 1 }));
+  const [startDate, setStartDate] = useState(sub(today(), { days: 2 }));
   const [endDate, setEndDate] = useState(today());
 
   const historyValues = api.raindata.valueTotal.useQuery({
@@ -52,21 +52,19 @@ const CustomTotalTable = () => {
   return (
     <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
       <div className="m-auto h-full w-full">
-        <h1 className="mb-6 text-center text-4xl font-bold">
-          Rain Totals by Date
+        <h1 className="mt-4 mb-6 text-center text-4xl font-bold">
+          Rain Totals Between Dates
         </h1>
         <div className="m-auto max-w-xs">
           <label className="label">
             <span className="label-text">Start Date</span>
           </label>
           <input
-            type="datetime-local"
+            type="date"
             className="input-bordered input w-full"
-            value={format(startDate, "yyyy-MM-dd'T'HH:mm")}
+            value={format(startDate, "yyyy-MM-dd")}
             onChange={(event) =>
-              setStartDate(
-                parse(event.target.value, "yyyy-MM-dd'T'HH:mm", new Date())
-              )
+              setStartDate(parse(event.target.value, "yyyy-MM-dd", new Date()))
             }
           />
         </div>
@@ -75,20 +73,13 @@ const CustomTotalTable = () => {
             <span className="label-text">End Date</span>
           </label>
           <input
-            type="datetime-local"
+            type="date"
             className="input-bordered input w-full"
-            value={format(endDate, "yyyy-MM-dd'T'HH:mm")}
+            value={format(endDate, "yyyy-MM-dd")}
             onChange={(event) =>
-              setEndDate(
-                parse(event.target.value, "yyyy-MM-dd'T'HH:mm", new Date())
-              )
+              setEndDate(parse(event.target.value, "yyyy-MM-dd", new Date()))
             }
           />
-        </div>
-        <div className="alert alert-warning mx-auto mt-8 max-w-md shadow-lg">
-          <div>
-            <span>Warning! This view is inaccurate beyond a few days!</span>
-          </div>
         </div>
       </div>
       {DataTable()}

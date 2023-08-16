@@ -1,3 +1,4 @@
+import { format, isToday, sub } from "date-fns";
 import { RainGaugeData } from "./constants";
 
 // Utility function to get new Date object with time zeroed out
@@ -28,6 +29,13 @@ export const getRainGaugeLabel = (tag: string) => {
     return tag;
   }
 };
+
+// Either get datetime as second before midnight, or current time (- 1min) if date is today
+// Formats the datetime to be used in iHistorian query
+export const iHistFormatDT = (date: Date) =>
+  isToday(date)
+    ? `${format(sub(new Date(), { minutes: 1 }), "MM/dd/yyyy HH:mm")}:00`
+    : `${format(date, "MM/dd/yyyy")} 23:59:00`;
 
 // This function parses response from IHistorian with a value for every gauge
 export const parseDatabaseValues = (dbValues: IHistValues): AllGaugeValues => {

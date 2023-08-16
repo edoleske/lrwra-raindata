@@ -3,8 +3,8 @@ import {
   add,
   addDays,
   addMonths,
+  differenceInDays,
   format,
-  isBefore,
   isToday,
   startOfMonth,
 } from "date-fns";
@@ -23,7 +23,7 @@ import {
 import { createTRPCRouter, publicProcedure } from "../trpc";
 import { RainGaugeData } from "~/utils/constants";
 import { handleError, normalizeValues } from "~/server/api/utils";
-import { getRawData } from "../queries";
+import { getRawData, getTotalBetweenTwoDates } from "../queries";
 
 export const rainDataRouter = createTRPCRouter({
   // This endpoint is for testing queries
@@ -34,7 +34,7 @@ export const rainDataRouter = createTRPCRouter({
         ADAMS.AF2295LQT.F_CV.VALUE, ADAMS.AF2295LQT.F_CV.QUALITY,
         ADAMS.AF2295LQY.F_CV.VALUE, ADAMS.AF2295LQY.F_CV.QUALITY
       FROM IHTREND
-      WHERE samplingmode = rawbytime AND timestamp = '04/03/2023 01:00:00'
+      WHERE samplingmode = rawbytime AND timestamp >= '05/31/2023 23:59:00' AND timestamp <= '05/31/2023 23:59:00'
       ORDER BY TIMESTAMP
     `;
     try {
@@ -132,53 +132,14 @@ export const rainDataRouter = createTRPCRouter({
         });
       }
 
-      let queryString = `
-        SELECT 
-        ${RainGaugeData.map(
-          (gauge) => `${gauge.tag}.F_CV.VALUE, ${gauge.tag}.F_CV.QUALITY, `
-        ).join("")} timestamp
-        FROM IHTREND
-        WHERE samplingmode = 'rawbytime' AND (
-      `;
-
       const startOfCurrent = startOfMonth(input.month);
       const startOfNext = addMonths(startOfCurrent, 1);
-      for (
-        let i = startOfMonth(input.month);
-        isBefore(i, startOfNext);
-        i = addDays(i, 1)
-      ) {
-        queryString += `(
-          TIMESTAMP >= '${format(i, "MM/dd/yyyy")} 23:59:59' AND 
-          TIMESTAMP <= '${format(i, "MM/dd/yyyy")} 23:59:59')`;
-      }
-      queryString += ")";
 
       try {
-        const result = await connection.query(queryString);
-        assertHistorianValuesAll(result);
-        const parsedResult = result.map((r) => parseDatabaseValues(r));
-
-        const totals: AllGaugeTotals = {
-          startDate: startOfCurrent,
-          endDate: startOfNext,
-          readings: [],
-        };
-
-        if (result.length <= 0) {
-          throw new Error("No data returned from database!");
-        }
-
-        totals.readings = RainGaugeData.map((gauge) => ({
-          label: gauge.tag,
-          value: parsedResult.reduce(
-            (previous, a) =>
-              previous +
-              (a.readings.find((r) => r.label === gauge.tag)?.value ?? 0),
-            0
-          ),
-        }));
-
+        const totals = await getTotalBetweenTwoDates(
+          startOfCurrent,
+          startOfNext
+        );
         return { totals };
       } catch (err) {
         handleError(err);
@@ -187,46 +148,19 @@ export const rainDataRouter = createTRPCRouter({
   valueTotal: publicProcedure
     .input(z.object({ startDate: z.date(), endDate: z.date() }))
     .query(async ({ input }) => {
-      const gaugeTotals: AllGaugeTotals = {
-        startDate: input.startDate,
-        endDate: input.endDate,
-        readings: [],
-      };
+      if (differenceInDays(input.startDate, input.endDate) > 31) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Cannot total more than 31 days of data at a time.",
+        });
+      }
 
       try {
-        const queryString = `
-          SELECT 
-            ${RainGaugeData.map(
-              (gauge) => `${gauge.tag}.F_CV.VALUE, ${gauge.tag}.F_CV.QUALITY, `
-            ).join("")} timestamp
-          FROM IHTREND
-          WHERE samplingmode = 'interpolatedtoraw' AND 
-            numberofsamples = 1000 AND 
-            timestamp >= '${format(
-              input.startDate,
-              "MM/dd/yyyy HH:mm:ss"
-            )}' AND 
-            timestamp <= '${format(input.endDate, "MM/dd/yyyy HH:mm:ss")}'
-        `;
-
-        const result = await connection.query(queryString);
-
-        for (const gauge of RainGaugeData.map((rg) => rg.tag)) {
-          assertHistorianValuesSingle(result, gauge);
-
-          const history = parseDatabaseHistory(result, gauge);
-          history.readings = normalizeValues(history.readings);
-
-          gaugeTotals.readings.push({
-            label: gauge,
-            value: history.readings.reduce(
-              (accumulator, value) => accumulator + value.value,
-              0
-            ),
-          });
-        }
-
-        return gaugeTotals;
+        const totals = await getTotalBetweenTwoDates(
+          pureDate(input.startDate),
+          addDays(pureDate(input.endDate), 1)
+        );
+        return totals;
       } catch (err) {
         handleError(err);
       }
@@ -280,6 +214,13 @@ export const rainDataRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ input }) => {
+      if (differenceInDays(input.startDate, input.endDate) > 31) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Cannot retrieve more than 31 days of data at once.",
+        });
+      }
+
       try {
         const result = await getRawData(
           input.gauge,

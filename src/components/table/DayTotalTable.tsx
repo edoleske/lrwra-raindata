@@ -50,7 +50,7 @@ const DayTotalTable = () => {
   return (
     <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
       <div className="m-auto h-full w-full">
-        <h1 className="mb-6 text-center text-4xl font-bold">
+        <h1 className="mt-4 mb-6 text-center text-4xl font-bold">
           Rain Totals by Date
         </h1>
         <div className="m-auto max-w-xs">

@@ -1,6 +1,11 @@
-import { add, format } from "date-fns";
+import { add, addDays, format, isBefore } from "date-fns";
 import { connection } from "../db";
-import { assertHistorianValuesSingle } from "../typeValidation";
+import {
+  assertHistorianValuesAll,
+  assertHistorianValuesSingle,
+} from "../typeValidation";
+import { RainGaugeData } from "~/utils/constants";
+import { iHistFormatDT, parseDatabaseValues } from "~/utils/utils";
 
 export const getRawData = async (
   gauge: string,
@@ -28,4 +33,48 @@ export const getRawData = async (
   }
 
   return result;
+};
+
+export const getTotalBetweenTwoDates = async (start: Date, end: Date) => {
+  let queryString = `
+    SELECT 
+    ${RainGaugeData.map(
+      (gauge) => `${gauge.tag}.F_CV.VALUE, ${gauge.tag}.F_CV.QUALITY, `
+    ).join("")} timestamp
+    FROM IHTREND
+    WHERE samplingmode = 'rawbytime' AND
+  `;
+
+  const timestampFilters: string[] = [];
+  for (let i = start; isBefore(i, end); i = addDays(i, 1)) {
+    timestampFilters.push(`(
+      TIMESTAMP >= '${iHistFormatDT(i)}' AND 
+      TIMESTAMP <= '${iHistFormatDT(i)}')`);
+  }
+  queryString += timestampFilters.join(" OR ");
+
+  const result = await connection.query(queryString);
+  assertHistorianValuesAll(result);
+  const parsedResult = result.map((r) => parseDatabaseValues(r));
+
+  const totals: AllGaugeTotals = {
+    startDate: start,
+    endDate: end,
+    readings: [],
+  };
+
+  if (result.length <= 0) {
+    throw new Error("No data returned from database!");
+  }
+
+  totals.readings = RainGaugeData.map((gauge) => ({
+    label: gauge.tag,
+    value: parsedResult.reduce(
+      (previous, a) =>
+        previous + (a.readings.find((r) => r.label === gauge.tag)?.value ?? 0),
+      0
+    ),
+  }));
+
+  return totals;
 };
