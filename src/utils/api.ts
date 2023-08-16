@@ -43,6 +43,7 @@ export const api = createTRPCNext<AppRouter>({
           url: `${getBaseUrl()}/api/trpc`,
         }),
       ],
+      queryClientConfig: { defaultOptions: { queries: { retry: 1 } } },
     };
   },
   /**

@@ -1,27 +1,16 @@
 import { format, parse } from "date-fns";
 import { useState } from "react";
 import { api } from "~/utils/api";
-import { getRainGaugeLabel } from "~/utils/utils";
+import { getRainGaugeLabel, today } from "~/utils/utils";
+import QueryErrorAlert from "~/components/QueryErrorAlert";
 
 const MonthTotalTable = () => {
-  const [month, setMonth] = useState(
-    parse("2023-05-11", "yyyy-MM-dd", new Date())
-  );
-  const [queryMonth, setQueryMonth] = useState(
-    parse("2023-05-11", "yyyy-MM-dd", new Date())
-  );
+  const [month, setMonth] = useState(today());
+  const [queryMonth, setQueryMonth] = useState(today());
 
   const historyValues = api.raindata.monthValues.useQuery({
     month: queryMonth,
   });
-
-  if (historyValues.isError) {
-    return (
-      <div>
-        <p>Encountered an error!</p>
-      </div>
-    );
-  }
 
   const onDateChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     let newDate = parse(event.target.value, "yyyy-MM-dd", new Date());
@@ -32,6 +21,10 @@ const MonthTotalTable = () => {
   };
 
   const DataTable = () => {
+    if (historyValues.isError) {
+      return <QueryErrorAlert message={historyValues.error.message} />;
+    }
+
     if (!historyValues.data) {
       return (
         <div className="spinner spinner-primary spinner-xl m-auto mt-8"></div>

@@ -148,7 +148,7 @@ export const rainDataRouter = createTRPCRouter({
   valueTotal: publicProcedure
     .input(z.object({ startDate: z.date(), endDate: z.date() }))
     .query(async ({ input }) => {
-      if (differenceInDays(input.startDate, input.endDate) > 31) {
+      if (Math.abs(differenceInDays(input.startDate, input.endDate)) > 31) {
         throw new TRPCError({
           code: "BAD_REQUEST",
           message: "Cannot total more than 31 days of data at a time.",

@@ -2,25 +2,32 @@ import { format, parse, sub } from "date-fns";
 import { useState } from "react";
 import { api } from "~/utils/api";
 import { today } from "~/utils/utils";
+import QueryErrorAlert from "~/components/QueryErrorAlert";
 
 const CustomTotalTable = () => {
   const [startDate, setStartDate] = useState(sub(today(), { days: 2 }));
   const [endDate, setEndDate] = useState(today());
 
+  const [queryStartDate, setQueryStartDate] = useState(
+    sub(today(), { days: 2 })
+  );
+  const [queryEndDate, setQueryEndDate] = useState(today());
+
+  const updateQuery = () => {
+    setQueryStartDate(startDate);
+    setQueryEndDate(endDate);
+  };
+
   const historyValues = api.raindata.valueTotal.useQuery({
-    startDate: startDate,
-    endDate: endDate,
+    startDate: queryStartDate,
+    endDate: queryEndDate,
   });
 
-  if (historyValues.isError) {
-    return (
-      <div>
-        <p>Encountered an error!</p>
-      </div>
-    );
-  }
-
   const DataTable = () => {
+    if (historyValues.isError) {
+      return <QueryErrorAlert message={historyValues.error.message} />;
+    }
+
     if (!historyValues.data) {
       return (
         <div className="spinner spinner-primary spinner-xl m-auto mt-8"></div>
@@ -80,6 +87,19 @@ const CustomTotalTable = () => {
               setEndDate(parse(event.target.value, "yyyy-MM-dd", new Date()))
             }
           />
+        </div>
+        <div className="p-4"></div>
+        <div className="flex w-full justify-center">
+          <div
+            className={`btn-primary btn ${
+              startDate === queryStartDate && endDate === queryEndDate
+                ? "btn-disabled"
+                : ""
+            }`}
+            onClick={updateQuery}
+          >
+            Update
+          </div>
         </div>
       </div>
       {DataTable()}

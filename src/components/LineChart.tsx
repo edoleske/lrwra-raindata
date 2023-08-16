@@ -179,8 +179,8 @@ const LineChart = ({ data, dimensions }: LineChartProps) => {
 
   if (!data) {
     return (
-      <div className="h-full w-full text-center">
-        <div className="spinner spinner-xl spinner-primary"></div>
+      <div className="p-4 text-center">
+        <div>No data!</div>
       </div>
     );
   }

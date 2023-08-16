@@ -2,23 +2,21 @@ import { format, parse } from "date-fns";
 import { useState } from "react";
 import { api } from "~/utils/api";
 import { getRainGaugeLabel, today } from "~/utils/utils";
+import QueryErrorAlert from "../QueryErrorAlert";
 
 const DayTotalTable = () => {
   const [date, setDate] = useState(today());
+  const [queryDate, setQueryDate] = useState(today());
 
   const historyValues = api.raindata.dateValues.useQuery({
-    date: date,
+    date: queryDate,
   });
 
-  if (historyValues.isError) {
-    return (
-      <div>
-        <p>Encountered an error!</p>
-      </div>
-    );
-  }
-
   const DataTable = () => {
+    if (historyValues.isError) {
+      return <QueryErrorAlert message={historyValues.error.message} />;
+    }
+
     if (!historyValues.data) {
       return (
         <div className="spinner spinner-primary spinner-xl m-auto mt-8"></div>
@@ -65,6 +63,17 @@ const DayTotalTable = () => {
               setDate(parse(event.target.value, "yyyy-MM-dd", new Date()))
             }
           />
+        </div>
+        <div className="p-4"></div>
+        <div className="flex w-full justify-center">
+          <div
+            className={`btn-primary btn ${
+              date === queryDate ? "btn-disabled" : ""
+            }`}
+            onClick={() => setQueryDate(date)}
+          >
+            Update
+          </div>
         </div>
       </div>
       {DataTable()}
