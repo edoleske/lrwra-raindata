@@ -30,6 +30,16 @@ export const getRainGaugeLabel = (tag: string) => {
   }
 };
 
+// Utility function to convert gauge tag to short label
+export const getRainGaugeLabelShort = (tag: string, stripSpace = false) => {
+  const gauge = RainGaugeData.find((rg) => rg.tag === tag);
+  if (gauge) {
+    return stripSpace ? gauge.short.replace(/\s/g, "") : gauge.short;
+  } else {
+    return tag;
+  }
+};
+
 // Either get datetime as second before midnight, or current time (- 1min) if date is today
 // Formats the datetime to be used in iHistorian query
 export const iHistFormatDT = (date: Date) =>

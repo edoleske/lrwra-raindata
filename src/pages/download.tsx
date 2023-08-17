@@ -1,15 +1,18 @@
-import { add, compareAsc, format, parse, sub } from "date-fns";
+import { compareAsc, format, parse } from "date-fns";
 import { saveAs } from "file-saver";
 import { useContext, useState } from "react";
+import { BsCalendarEvent, BsCalendarWeek } from "react-icons/bs";
 import { GlobalAlertContext } from "~/components/globalAlerts/GlobalAlertProvider";
 import { api } from "~/utils/api";
 import { RainGaugeData } from "~/utils/constants";
+import { getRainGaugeLabelShort } from "~/utils/utils";
 
 const DownloadPage = () => {
   const addAlert = useContext(GlobalAlertContext);
 
   const [selectedGauge, setSelectedGauge] = useState("ADAMS.AF2295LQT");
-  const [startDate, setStartDate] = useState(sub(new Date(), { days: 2 }));
+  const [dateRange, setDateRange] = useState(false);
+  const [startDate, setStartDate] = useState(new Date());
   const [endDate, setEndDate] = useState(new Date());
   const [frequency, setFrequency] = useState(1);
   const fileMutation = api.raindata.downloadCSV.useMutation();
@@ -26,16 +29,39 @@ const DownloadPage = () => {
     );
 
     if (result) {
+      const gaugeString = getRainGaugeLabelShort(selectedGauge, true);
+      let dateString = format(startDate, "yyyyMMdd");
+      if (dateRange) {
+        dateString += "-" + format(endDate, "yyyyMMdd");
+      }
       const filename =
-        "LRWRA_RainDataExport_" +
-        format(startDate, "yyyyMMdd") +
-        "-" +
-        format(endDate, "yyyyMMdd") +
-        ".csv";
+        "LRWRA_" + gaugeString + "RainData_" + dateString + ".csv";
       const blob = new Blob([result], { type: "text/csv;charset=utf-8;" });
 
       // Uses file-saver library to use best practive file download on most browsers
       saveAs(blob, filename);
+    }
+  };
+
+  const toggleDateRange = () => {
+    setDateRange((dr) => {
+      if (dr) {
+        setEndDate(startDate);
+      }
+      return !dr;
+    });
+  };
+
+  const onDateChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const value = parse(event.target.value, "yyyy-MM-dd", new Date());
+
+    // If new date is after current date
+    if (compareAsc(value, new Date()) === 1) {
+      setStartDate(new Date());
+      setEndDate(new Date());
+    } else {
+      setStartDate(value);
+      setEndDate(value);
     }
   };
 
@@ -46,7 +72,7 @@ const DownloadPage = () => {
     if (compareAsc(value, endDate) === -1) {
       setStartDate(value);
     } else {
-      setStartDate(sub(endDate, { days: 1 }));
+      setStartDate(endDate);
     }
   };
 
@@ -61,13 +87,73 @@ const DownloadPage = () => {
         setEndDate(value);
       }
     } else {
-      setEndDate(add(startDate, { days: 1 }));
+      setEndDate(startDate);
+    }
+  };
+
+  const DateForm = () => {
+    if (dateRange) {
+      return (
+        <div className="flex flex-col gap-2 md:flex-row">
+          <div className="flex items-end gap-2">
+            <div className="w-full max-w-xs">
+              <label className="label">
+                <span className="label-text">Start Date</span>
+              </label>
+              <input
+                type="date"
+                className="input-bordered input w-full"
+                value={format(startDate, "yyyy-MM-dd")}
+                onChange={onStartDateChange}
+              />
+            </div>
+            <div className="tooltip" data-tip="Use Single Date">
+              <div className="btn" onClick={toggleDateRange}>
+                <BsCalendarEvent size={18} />
+              </div>
+            </div>
+          </div>
+
+          <div className="w-full max-w-xs">
+            <label className="label">
+              <span className="label-text">End Date</span>
+            </label>
+            <input
+              type="date"
+              className="input-bordered input w-full"
+              value={format(endDate, "yyyy-MM-dd")}
+              onChange={onEndDateChange}
+            />
+          </div>
+        </div>
+      );
+    } else {
+      return (
+        <div className="flex items-end gap-2">
+          <div className="w-full max-w-xs">
+            <label className="label">
+              <span className="label-text">Date</span>
+            </label>
+            <input
+              type="date"
+              className="input-bordered input w-full"
+              value={format(startDate, "yyyy-MM-dd")}
+              onChange={onDateChange}
+            />
+          </div>
+          <div className="tooltip" data-tip="Use Date Range">
+            <div className="btn" onClick={toggleDateRange}>
+              <BsCalendarWeek size={18} />
+            </div>
+          </div>
+        </div>
+      );
     }
   };
 
   const Form = () => (
-    <div className="m-auto">
-      <div className="w-full max-w-xs">
+    <div className="m-auto flex-col items-center justify-center">
+      <div className="m-auto w-full max-w-xs md:ml-0">
         <label className="label">
           <span className="label-text">Rain Gauge</span>
         </label>
@@ -83,29 +169,8 @@ const DownloadPage = () => {
           ))}
         </select>
       </div>
-      <div className="w-full max-w-xs">
-        <label className="label">
-          <span className="label-text">Start Date</span>
-        </label>
-        <input
-          type="date"
-          className="input-bordered input w-full"
-          value={format(startDate, "yyyy-MM-dd")}
-          onChange={onStartDateChange}
-        />
-      </div>
-      <div className="w-full max-w-xs">
-        <label className="label">
-          <span className="label-text">End Date</span>
-        </label>
-        <input
-          type="date"
-          className="input-bordered input w-full"
-          value={format(endDate, "yyyy-MM-dd")}
-          onChange={onEndDateChange}
-        />
-      </div>
-      <div className="w-full max-w-xs">
+      {DateForm()}
+      <div className="m-auto w-full max-w-xs md:ml-0">
         <label className="label">
           <span className="label-text">Sample Frequency</span>
         </label>
@@ -129,6 +194,11 @@ const DownloadPage = () => {
     return (
       <div className="w-full p-8 text-center">
         <h1 className="mb-8 text-4xl font-bold">Download Data</h1>
+        {dateRange && (
+          <p className="mb-4">
+            Loading your data! Please be patient as this can take up 30 seconds.
+          </p>
+        )}
         <div className="spinner spinner-xl spinner-primary m-auto"></div>
       </div>
     );
@@ -144,7 +214,7 @@ const DownloadPage = () => {
       <p>
         Our gauges report a single floating-point value every second
         representing the amount of rain measured that day in inches. The value
-        is reset at the beginning of everyday.
+        is reset at the beginning of every day.
       </p>
       {Form()}
       <div className="btn-primary btn" onClick={onClick}>

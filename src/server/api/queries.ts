@@ -1,4 +1,4 @@
-import { add, addDays, format, isBefore } from "date-fns";
+import { add, addDays, compareAsc, format, isBefore } from "date-fns";
 import { connection } from "../db";
 import {
   assertHistorianValuesAll,
@@ -16,6 +16,10 @@ export const getRawData = async (
   let result: IHistValues[] = [];
 
   for (let d = start; d.getTime() < end.getTime(); d = add(d, { days: 2 })) {
+    // If we're at the last iteration, filter the timestamp to the input end date instead of adding two days
+    const endPlusTwo = add(d, { days: 2 });
+    const correctEnd = compareAsc(end, endPlusTwo) === 1 ? endPlusTwo : end;
+
     const queryString = `
       SELECT
         timestamp, ${gauge}.F_CV.VALUE, ${gauge}.F_CV.QUALITY,
@@ -23,7 +27,7 @@ export const getRawData = async (
       WHERE samplingmode = interpolated AND 
         intervalmilliseconds = ${60000 * frequency} AND 
         timestamp >= '${format(d, "MM/dd/yyyy HH:mm:00")}' AND 
-        timestamp <= '${format(add(d, { days: 2 }), "MM/dd/yyyy HH:mm:00")}'
+        timestamp <= '${format(correctEnd, "MM/dd/yyyy HH:mm:00")}'
       ORDER BY TIMESTAMP
     `;
 

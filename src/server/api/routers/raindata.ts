@@ -3,6 +3,7 @@ import {
   add,
   addDays,
   addMonths,
+  compareAsc,
   differenceInDays,
   format,
   isToday,
@@ -15,6 +16,7 @@ import {
   assertHistorianValuesAll,
 } from "~/server/typeValidation";
 import {
+  getRainGaugeLabel,
   parseDatabaseHistory,
   parseDatabaseValues,
   pureDate,
@@ -214,7 +216,27 @@ export const rainDataRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ input }) => {
-      if (differenceInDays(input.startDate, input.endDate) > 31) {
+      if (!RainGaugeData.find((rg) => rg.tag.trim() === input.gauge.trim())) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: `Unknown rain gauge ${input.gauge}`,
+        });
+      }
+
+      const start = pureDate(input.startDate);
+      const end = addDays(pureDate(input.endDate), 1);
+
+      if (compareAsc(end, start) !== 1) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: `End date ${format(
+            end,
+            "yyyy-mm-DD"
+          )} is before start date ${format(start, "yyyy-mm-DD")}`,
+        });
+      }
+
+      if (Math.abs(differenceInDays(start, end)) > 31) {
         throw new TRPCError({
           code: "BAD_REQUEST",
           message: "Cannot retrieve more than 31 days of data at once.",
@@ -224,8 +246,8 @@ export const rainDataRouter = createTRPCRouter({
       try {
         const result = await getRawData(
           input.gauge,
-          pureDate(input.startDate),
-          input.endDate,
+          start,
+          end,
           input.frequency ? input.frequency : 1
         );
         const history = parseDatabaseHistory(result, input.gauge);
@@ -233,7 +255,7 @@ export const rainDataRouter = createTRPCRouter({
         // Generate CSV file as string
         let csvfile = '"Rain Gauge","Timestamp","Value","Quality"\r\n';
         history.readings.forEach((reading) => {
-          csvfile += `"${history.label}","${format(
+          csvfile += `"${getRainGaugeLabel(history.label)}","${format(
             reading.timestamp,
             "yyyy-MM-dd HH:mm:ss"
           )}","${reading.value}","${reading.quality}"\r\n`;
