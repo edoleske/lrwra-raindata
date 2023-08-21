@@ -3,6 +3,8 @@ import { useState } from "react";
 import { api } from "~/utils/api";
 import { getRainGaugeLabel, today } from "~/utils/utils";
 import QueryErrorAlert from "~/components/QueryErrorAlert";
+import { MdDownload } from "react-icons/md";
+import { saveAs } from "file-saver";
 
 const MonthTotalTable = () => {
   const [month, setMonth] = useState(today());
@@ -18,6 +20,24 @@ const MonthTotalTable = () => {
       newDate = new Date();
     }
     setMonth(newDate);
+  };
+
+  const downloadQueryResult = () => {
+    if (historyValues.data) {
+      let csvfile = '"Rain Gauge","Value (Inches)"\r\n';
+      historyValues.data.totals.readings.forEach((reading) => {
+        csvfile += `"${getRainGaugeLabel(reading.label)}","${
+          reading.value
+        }"\r\n`;
+      });
+
+      const filename =
+        "LRWRA_RainGaugeTotals_" + format(queryMonth, "yyyyMM") + ".csv";
+      const blob = new Blob([csvfile], { type: "text/csv;charset=utf-8;" });
+
+      // Uses file-saver library to use best practive file download on most browsers
+      saveAs(blob, filename);
+    }
   };
 
   const DataTable = () => {
@@ -36,7 +56,15 @@ const MonthTotalTable = () => {
         <thead>
           <tr>
             <th>Gauge</th>
-            <th>Value (inches)</th>
+            <th className="flex items-center justify-between">
+              Value (inches)
+              <span
+                className="btn-xs btn-circle btn"
+                onClick={downloadQueryResult}
+              >
+                <MdDownload size={14} />
+              </span>
+            </th>
           </tr>
         </thead>
         <tbody>

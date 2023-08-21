@@ -1,9 +1,10 @@
 import { format, parse, sub } from "date-fns";
 import { useState } from "react";
 import { api } from "~/utils/api";
-import { today } from "~/utils/utils";
+import { getRainGaugeLabel, today } from "~/utils/utils";
 import QueryErrorAlert from "~/components/QueryErrorAlert";
-import { MdWarning } from "react-icons/md";
+import { MdDownload, MdWarning } from "react-icons/md";
+import { saveAs } from "file-saver";
 
 const CustomTotalTable = () => {
   const [startDate, setStartDate] = useState(sub(new Date(), { days: 2 }));
@@ -23,6 +24,27 @@ const CustomTotalTable = () => {
     startDate: queryStartDate,
     endDate: queryEndDate,
   });
+
+  const downloadQueryResult = () => {
+    if (historyValues.data) {
+      let csvfile = '"Rain Gauge","Value (Inches)"\r\n';
+      historyValues.data.readings.forEach((reading) => {
+        csvfile += `"${getRainGaugeLabel(reading.label)}","${
+          reading.value
+        }"\r\n`;
+      });
+
+      const dateString =
+        format(queryStartDate, "yyyyMMdd") +
+        "-" +
+        format(queryEndDate, "yyyyMMdd");
+      const filename = "LRWRA_RainGaugeTotals_" + dateString + ".csv";
+      const blob = new Blob([csvfile], { type: "text/csv;charset=utf-8;" });
+
+      // Uses file-saver library to use best practive file download on most browsers
+      saveAs(blob, filename);
+    }
+  };
 
   const isDateCloseToMidnight = () =>
     (startDate.getHours() === 0 && startDate.getMinutes() < 6) ||
@@ -44,13 +66,21 @@ const CustomTotalTable = () => {
         <thead>
           <tr>
             <th>Gauge</th>
-            <th>Value (inches)</th>
+            <th className="flex items-center justify-between">
+              Value (inches)
+              <span
+                className="btn-xs btn-circle btn"
+                onClick={downloadQueryResult}
+              >
+                <MdDownload size={14} />
+              </span>
+            </th>
           </tr>
         </thead>
         <tbody>
           {historyValues.data.readings.map((reading) => (
             <tr key={reading.label}>
-              <td>{reading.label}</td>
+              <td>{getRainGaugeLabel(reading.label)}</td>
               <td>
                 {reading.value === 0 ? 0 : reading.value.toFixed(2)}&quot;
               </td>
@@ -65,7 +95,7 @@ const CustomTotalTable = () => {
     <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
       <div className="m-auto h-full w-full">
         <h1 className="mt-4 mb-6 text-center text-4xl font-bold">
-          Rain Totals Between Dates
+          Rain Totals by Range
         </h1>
         <div className="m-auto max-w-xs">
           <label className="label">
