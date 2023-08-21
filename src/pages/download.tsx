@@ -10,7 +10,7 @@ import { getRainGaugeLabelShort } from "~/utils/utils";
 const DownloadPage = () => {
   const addAlert = useContext(GlobalAlertContext);
 
-  const [selectedGauge, setSelectedGauge] = useState("ADAMS.AF2295LQT");
+  const [selectedGauge, setSelectedGauge] = useState("all");
   const [dateRange, setDateRange] = useState(false);
   const [startDate, setStartDate] = useState(new Date());
   const [endDate, setEndDate] = useState(new Date());
@@ -162,6 +162,7 @@ const DownloadPage = () => {
           value={selectedGauge}
           onChange={(e) => setSelectedGauge(e.target.value)}
         >
+          <option value="all">All</option>
           {RainGaugeData.map((gauge, index) => (
             <option key={index} value={gauge.tag}>
               {gauge.label}
@@ -196,7 +197,8 @@ const DownloadPage = () => {
         <h1 className="mb-8 text-4xl font-bold">Download Data</h1>
         {dateRange && (
           <p className="mb-4">
-            Loading your data! Please be patient as this can take up 30 seconds.
+            Loading your data! Please be patient as this can take up to a
+            minute.
           </p>
         )}
         <div className="spinner spinner-xl spinner-primary m-auto"></div>

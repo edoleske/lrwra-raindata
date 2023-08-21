@@ -30,6 +30,7 @@ import {
   getDayTotalAfterTime,
   getDayTotalBeforeTime,
   getRawData,
+  getRawDataAll,
   getTotalBetweenTwoDates,
 } from "../queries";
 
@@ -281,7 +282,10 @@ export const rainDataRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ input }) => {
-      if (!RainGaugeData.find((rg) => rg.tag.trim() === input.gauge.trim())) {
+      if (
+        !RainGaugeData.find((rg) => rg.tag.trim() === input.gauge.trim()) &&
+        input.gauge !== "all"
+      ) {
         throw new TRPCError({
           code: "BAD_REQUEST",
           message: `Unknown rain gauge ${input.gauge}`,
@@ -309,24 +313,49 @@ export const rainDataRouter = createTRPCRouter({
       }
 
       try {
-        const result = await getRawData(
-          input.gauge,
-          start,
-          end,
-          input.frequency ? input.frequency : 1
-        );
-        const history = parseDatabaseHistory(result, input.gauge);
+        let csvfile = "";
+        if (input.gauge === "all") {
+          const result = await getRawDataAll(
+            start,
+            end,
+            input.frequency ? input.frequency : 1
+          );
+          const history = result.map((r) => parseDatabaseValues(r));
 
-        // Generate CSV file as string
-        let csvfile = '"Rain Gauge","Timestamp","Value","Quality"\r\n';
-        history.readings.forEach((reading) => {
-          csvfile += `"${getRainGaugeLabel(history.label)}","${format(
-            reading.timestamp,
-            "yyyy-MM-dd HH:mm:ss"
-          )}","${reading.value}","${reading.quality}"\r\n`;
-        });
+          // Generate CSV file as string
+          csvfile = `"Timestamp",${RainGaugeData.map(
+            (rg) => `"${rg.label} Value (in)","${rg.label} Status %"`
+          ).join(",")}\r\n`;
+          history.forEach((row) => {
+            csvfile += `"${format(
+              row.timestamp,
+              "yyyy-MM-dd HH:mm:ss"
+            )}",${RainGaugeData.map((rg) => {
+              const reading = row.readings.find((r) => r.label === rg.tag);
+              if (!reading) {
+                return '"",""';
+              }
+              return `"${reading.value}","${reading.quality}"`;
+            }).join(",")}\r\n`;
+          });
+        } else {
+          const result = await getRawData(
+            input.gauge,
+            start,
+            end,
+            input.frequency ? input.frequency : 1
+          );
+          const history = parseDatabaseHistory(result, input.gauge);
 
-        // Return CSV File string encoded as base64
+          // Generate CSV file as string
+          csvfile = '"Rain Gauge","Timestamp","Value","Quality"\r\n';
+          history.readings.forEach((reading) => {
+            csvfile += `"${getRainGaugeLabel(history.label)}","${format(
+              reading.timestamp,
+              "yyyy-MM-dd HH:mm:ss"
+            )}","${reading.value}","${reading.quality}"\r\n`;
+          });
+        }
         return csvfile;
       } catch (err) {
         handleError(err);

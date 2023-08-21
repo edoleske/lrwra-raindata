@@ -39,6 +39,35 @@ export const getRawData = async (
   return result;
 };
 
+export const getRawDataAll = async (start: Date, end: Date, frequency = 1) => {
+  let result: IHistValues[] = [];
+
+  for (let d = start; d.getTime() < end.getTime(); d = add(d, { days: 2 })) {
+    // If we're at the last iteration, filter the timestamp to the input end date instead of adding two days
+    const endPlusTwo = add(d, { days: 2 });
+    const correctEnd = compareAsc(end, endPlusTwo) === 1 ? endPlusTwo : end;
+
+    const queryString = `
+      SELECT
+        ${RainGaugeData.map(
+          (gauge) => `${gauge.tag}.F_CV.VALUE, ${gauge.tag}.F_CV.QUALITY, `
+        ).join("")} timestamp
+      FROM IHTREND
+      WHERE samplingmode = interpolated AND 
+        intervalmilliseconds = ${60000 * frequency} AND 
+        timestamp >= '${format(d, "MM/dd/yyyy HH:mm:00")}' AND 
+        timestamp <= '${format(correctEnd, "MM/dd/yyyy HH:mm:00")}'
+      ORDER BY TIMESTAMP
+    `;
+
+    const queryResult = await connection.query(queryString);
+    assertHistorianValuesAll(queryResult);
+    result = result.concat(queryResult);
+  }
+
+  return result;
+};
+
 export const getTotalBetweenTwoDates = async (start: Date, end: Date) => {
   let queryString = `
     SELECT 
