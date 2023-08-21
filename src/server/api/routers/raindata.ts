@@ -4,6 +4,7 @@ import {
   addDays,
   addMonths,
   compareAsc,
+  differenceInCalendarDays,
   differenceInDays,
   format,
   isToday,
@@ -25,7 +26,12 @@ import {
 import { createTRPCRouter, publicProcedure } from "../trpc";
 import { RainGaugeData } from "~/utils/constants";
 import { handleError, normalizeValues } from "~/server/api/utils";
-import { getRawData, getTotalBetweenTwoDates } from "../queries";
+import {
+  getDayTotalAfterTime,
+  getDayTotalBeforeTime,
+  getRawData,
+  getTotalBetweenTwoDates,
+} from "../queries";
 
 export const rainDataRouter = createTRPCRouter({
   // This endpoint is for testing queries
@@ -157,11 +163,70 @@ export const rainDataRouter = createTRPCRouter({
         });
       }
 
+      if (compareAsc(input.endDate, input.startDate) !== 1) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: `Start date/time must be before end date/time.`,
+        });
+      }
+
+      if (compareAsc(new Date(), input.endDate) !== 1) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "End date/time must be before current date/time.",
+        });
+      }
+
+      const totals: AllGaugeTotals = {
+        startDate: input.startDate,
+        endDate: input.endDate,
+        readings: [],
+      };
+
       try {
-        const totals = await getTotalBetweenTwoDates(
-          pureDate(input.startDate),
-          addDays(pureDate(input.endDate), 1)
+        const calendarDayRange = Math.abs(
+          differenceInCalendarDays(input.startDate, input.endDate)
         );
+        if (calendarDayRange == 0) {
+          const result = await getDayTotalAfterTime(
+            input.startDate,
+            input.endDate
+          );
+
+          totals.readings = RainGaugeData.map((gauge) => ({
+            label: gauge.tag,
+            value:
+              result.readings.find((r) => r.label === gauge.tag)?.value ?? 0,
+          }));
+        } else {
+          const startResult = await getDayTotalAfterTime(input.startDate);
+          const endResult = await getDayTotalBeforeTime(input.endDate);
+
+          totals.readings = RainGaugeData.map((gauge) => ({
+            label: gauge.tag,
+            value:
+              (startResult.readings.find((r) => r.label === gauge.tag)?.value ??
+                0) +
+              (endResult.readings.find((r) => r.label === gauge.tag)?.value ??
+                0),
+          }));
+
+          if (calendarDayRange > 1) {
+            const fullDayTotals = await getTotalBetweenTwoDates(
+              addDays(pureDate(input.startDate), 1),
+              pureDate(input.endDate)
+            );
+
+            totals.readings = totals.readings.map((r) => ({
+              label: r.label,
+              value:
+                r.value +
+                (fullDayTotals.readings.find((fdr) => fdr.label === r.label)
+                  ?.value ?? 0),
+            }));
+          }
+        }
+
         return totals;
       } catch (err) {
         handleError(err);

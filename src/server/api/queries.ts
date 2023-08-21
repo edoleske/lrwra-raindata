@@ -82,3 +82,120 @@ export const getTotalBetweenTwoDates = async (start: Date, end: Date) => {
 
   return totals;
 };
+
+export const getDayTotalBeforeTime = async (date: Date) => {
+  const queryString = `
+    SELECT 
+    ${RainGaugeData.map(
+      (gauge) => `${gauge.tag}.F_CV.VALUE, ${gauge.tag}.F_CV.QUALITY, `
+    ).join("")} timestamp
+    FROM IHTREND
+    WHERE samplingmode = 'rawbytime' AND
+      TIMESTAMP >= '${format(
+        date,
+        "MM/dd/yyyy HH:mm"
+      )}:00' AND TIMESTAMP <= '${format(date, "MM/dd/yyyy HH:mm")}:00'
+  `;
+
+  const result = await connection.query(queryString);
+  assertHistorianValuesAll(result);
+  const firstResult = result[0];
+
+  if (!firstResult) {
+    throw new Error(`No data found for date ${format(date, "yyyy-MM-dd")}`);
+  }
+
+  return parseDatabaseValues(firstResult);
+};
+
+export const getDayTotalAfterTime = async (
+  date: Date,
+  end: Date | null = null
+) => {
+  // If requested time is 11:59 PM, totals will all be zero
+  if (format(date, "HH:mm") === "23:59") {
+    return {
+      timestamp: date,
+      readings: RainGaugeData.map((gauge) => ({
+        label: gauge.tag,
+        value: 0,
+        quality: "100",
+      })),
+    };
+  }
+
+  let queryString = `
+    SELECT 
+    ${RainGaugeData.map(
+      (gauge) => `${gauge.tag}.F_CV.VALUE, ${gauge.tag}.F_CV.QUALITY, `
+    ).join("")} timestamp
+    FROM IHTREND
+    WHERE samplingmode = 'rawbytime' AND
+      (TIMESTAMP >= '${format(
+        date,
+        "MM/dd/yyyy HH:mm"
+      )}:00' AND TIMESTAMP <= '${format(date, "MM/dd/yyyy HH:mm")}:00') OR
+  `;
+
+  if (end) {
+    queryString += `
+      (TIMESTAMP >= '${format(
+        end,
+        "MM/dd/yyyy HH:mm"
+      )}:00' AND TIMESTAMP <= '${format(end, "MM/dd/yyyy HH:mm")}:00')
+    `;
+  } else {
+    queryString += `
+      (TIMESTAMP >= '${format(
+        date,
+        "MM/dd/yyyy"
+      )} 23:59:00' AND TIMESTAMP <= '${format(date, "MM/dd/yyyy")} 23:59:00')
+    `;
+  }
+
+  const result = await connection.query(queryString);
+  assertHistorianValuesAll(result);
+  const valuesAtStart = result[0];
+  const valuesAtEndOfDay = result[1];
+
+  if (!valuesAtStart || !valuesAtEndOfDay) {
+    throw new Error(
+      `Full data not available for day ${format(date, "yyyy-MM-dd")}`
+    );
+  }
+
+  const calcResult: IHistValues = {
+    timestamp: valuesAtStart.timestamp,
+  };
+
+  for (const key in valuesAtStart) {
+    if (key !== "timestamp") {
+      if (key.endsWith(".Value")) {
+        const end = valuesAtEndOfDay[key];
+        const start = valuesAtStart[key];
+
+        if (end === undefined || start === undefined) {
+          throw new Error(`Undefined value for key ${key}`);
+        }
+
+        if (isNaN(+end) || isNaN(+start)) {
+          throw new Error(`NaN found in ${start} or ${end}`);
+        }
+
+        if (+end < +start) {
+          // If value is going to be negative, assume start value is from previous day
+          // Gauges reset sometime between 12:00 AM and 12:05 AM
+          // So this happens when start date is before the reset for that day
+          // User is warned when using midnight as start date that results can be wrong
+          calcResult[key] = +end;
+        } else {
+          calcResult[key] = +end - +start;
+        }
+      } else {
+        calcResult[key] = valuesAtEndOfDay[key] ?? "";
+      }
+    }
+  }
+
+  return parseDatabaseValues(calcResult);
+};

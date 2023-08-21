@@ -3,10 +3,11 @@ import { useState } from "react";
 import { api } from "~/utils/api";
 import { today } from "~/utils/utils";
 import QueryErrorAlert from "~/components/QueryErrorAlert";
+import { MdWarning } from "react-icons/md";
 
 const CustomTotalTable = () => {
-  const [startDate, setStartDate] = useState(sub(today(), { days: 2 }));
-  const [endDate, setEndDate] = useState(today());
+  const [startDate, setStartDate] = useState(sub(new Date(), { days: 2 }));
+  const [endDate, setEndDate] = useState(new Date());
 
   const [queryStartDate, setQueryStartDate] = useState(
     sub(today(), { days: 2 })
@@ -22,6 +23,10 @@ const CustomTotalTable = () => {
     startDate: queryStartDate,
     endDate: queryEndDate,
   });
+
+  const isDateCloseToMidnight = () =>
+    (startDate.getHours() === 0 && startDate.getMinutes() < 6) ||
+    (endDate.getHours() === 0 && endDate.getMinutes() < 6);
 
   const DataTable = () => {
     if (historyValues.isError) {
@@ -67,11 +72,13 @@ const CustomTotalTable = () => {
             <span className="label-text">Start Date</span>
           </label>
           <input
-            type="date"
+            type="datetime-local"
             className="input-bordered input w-full"
-            value={format(startDate, "yyyy-MM-dd")}
+            value={format(startDate, "yyyy-MM-dd'T'HH:mm")}
             onChange={(event) =>
-              setStartDate(parse(event.target.value, "yyyy-MM-dd", new Date()))
+              setStartDate(
+                parse(event.target.value, "yyyy-MM-dd'T'HH:mm", new Date())
+              )
             }
           />
         </div>
@@ -80,14 +87,25 @@ const CustomTotalTable = () => {
             <span className="label-text">End Date</span>
           </label>
           <input
-            type="date"
+            type="datetime-local"
             className="input-bordered input w-full"
-            value={format(endDate, "yyyy-MM-dd")}
+            value={format(endDate, "yyyy-MM-dd'T'HH:mm")}
             onChange={(event) =>
-              setEndDate(parse(event.target.value, "yyyy-MM-dd", new Date()))
+              setEndDate(
+                parse(event.target.value, "yyyy-MM-dd'T'HH:mm", new Date())
+              )
             }
           />
         </div>
+        {isDateCloseToMidnight() && (
+          <div className="alert alert-warning mt-8">
+            <MdWarning size={28} className="h-6 w-6 shrink-0" />
+            <span>
+              Due to limitations with our rain gauges, using a time between
+              12:00 AM and 12:05 AM can lead to inaccurate results.
+            </span>
+          </div>
+        )}
         <div className="p-4"></div>
         <div className="flex w-full justify-center">
           <div
