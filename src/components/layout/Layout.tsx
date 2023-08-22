@@ -36,6 +36,7 @@ const Layout = ({ children }: LayoutProps) => {
           <div className="drawer-side">
             <label htmlFor="app-drawer" className="drawer-overlay"></label>
             <ul className="menu w-60 overflow-y-auto bg-base-300 p-4 font-semibold text-base-content">
+              <li className="menu-title">Visualizations</li>
               <li>
                 <Link
                   href="/"
@@ -46,18 +47,19 @@ const Layout = ({ children }: LayoutProps) => {
               </li>
               <li>
                 <Link
-                  href="/table"
-                  className={router.asPath === "/table" ? "active" : ""}
-                >
-                  Table
-                </Link>
-              </li>
-              <li>
-                <Link
                   href="/graph"
                   className={router.asPath === "/graph" ? "active" : ""}
                 >
                   Graph
+                </Link>
+              </li>
+              <li className="menu-title">Data</li>
+              <li>
+                <Link
+                  href="/table"
+                  className={router.asPath === "/table" ? "active" : ""}
+                >
+                  Totals
                 </Link>
               </li>
               <li>
@@ -66,6 +68,15 @@ const Layout = ({ children }: LayoutProps) => {
                   className={router.asPath === "/download" ? "active" : ""}
                 >
                   Download
+                </Link>
+              </li>
+              <li className="menu-title">Misc</li>
+              <li>
+                <Link
+                  href="/gauges"
+                  className={router.asPath === "/gauges" ? "active" : ""}
+                >
+                  Gauge Info
                 </Link>
               </li>
               <label className="swap-rotate swap btn-ghost btn-circle btn mt-auto">
