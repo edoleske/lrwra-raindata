@@ -19,7 +19,7 @@ const TablePage = () => {
   };
 
   return (
-    <div className="p-8 lg:p-16">
+    <div className="px-8 pt-4 pb-2 lg:px-16">
       <div className="tabs mb-4">
         <a
           className={`tab-bordered tab ${tableType === 0 ? "tab-active" : ""}`}

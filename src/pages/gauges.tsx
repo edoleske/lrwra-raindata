@@ -6,14 +6,18 @@ const GaugeDetails = () => {
       <thead>
         <tr>
           <th>Gauge</th>
-          <th>Street Address </th>
+          <th>Street Address</th>
+          <th>Coordinates</th>
         </tr>
       </thead>
       <tbody>
         {RainGaugeData.map((gauge, index) => (
           <tr key={index}>
-            <td>{gauge.label}</td>
+            <td className="sm:hidden">{gauge.short}</td>
+            <td className="hidden sm:table-cell lg:hidden">{gauge.label}</td>
+            <td className="hidden lg:table-cell">{gauge.long}</td>
             <td>{gauge.address}</td>
+            <td>{gauge.coordinates}</td>
           </tr>
         ))}
       </tbody>
@@ -27,7 +31,7 @@ const GaugeDetails = () => {
         Our rain gauges are scattered across the city of Little Rock, so we can
         monitor the rain experienced at key points in our collection system.
       </p>
-      {GaugeTable()}
+      <div className="m-auto overflow-x-auto">{GaugeTable()}</div>
     </div>
   );
 };
