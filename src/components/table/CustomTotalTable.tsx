@@ -3,7 +3,7 @@ import { useState } from "react";
 import { api } from "~/utils/api";
 import { getRainGaugeLabel, today } from "~/utils/utils";
 import QueryErrorAlert from "~/components/QueryErrorAlert";
-import { MdDownload, MdWarning } from "react-icons/md";
+import { MdDownload } from "react-icons/md";
 import { saveAs } from "file-saver";
 
 const CustomTotalTable = () => {
@@ -45,10 +45,6 @@ const CustomTotalTable = () => {
       saveAs(blob, filename);
     }
   };
-
-  const isDateCloseToMidnight = () =>
-    (startDate.getHours() === 0 && startDate.getMinutes() < 6) ||
-    (endDate.getHours() === 0 && endDate.getMinutes() < 6);
 
   const DataTable = () => {
     if (historyValues.isError) {
@@ -127,15 +123,6 @@ const CustomTotalTable = () => {
             }
           />
         </div>
-        {isDateCloseToMidnight() && (
-          <div className="alert alert-warning mt-8">
-            <MdWarning size={28} className="h-6 w-6 shrink-0" />
-            <span>
-              Due to limitations with our rain gauges, using a time between
-              12:00 AM and 12:05 AM can lead to inaccurate results.
-            </span>
-          </div>
-        )}
         <div className="p-4"></div>
         <div className="flex w-full justify-center">
           <div

@@ -1,4 +1,5 @@
 import { TRPCError } from "@trpc/server";
+import { RainGaugeData } from "~/utils/constants";
 
 export const handleError = (error: unknown) => {
   // String(err) works for all errors except for database errors
@@ -25,3 +26,40 @@ export const normalizeValues = (readings: TimestampedReading[]) =>
       value: newValue < 0 ? 0 : newValue,
     };
   });
+
+// This function is used to get the total rain calculated from list of DB values
+// Uses AllGaugeValues so each gauge can be calculated at the same time
+export const collectAllGaugeValuesIntoTotals = (
+  values: AllGaugeValues[],
+  date: Date
+) => {
+  const returnValues: AllGaugeValues = {
+    timestamp: date,
+    readings: RainGaugeData.map((gauge) => ({
+      label: gauge.tag,
+      value: 0,
+      quality: "100",
+    })),
+  };
+
+  for (let i = values.length - 1; i > 0; i--) {
+    for (const gauge of RainGaugeData) {
+      const reading = values[i]?.readings.find((r) => r.label === gauge.tag);
+      const lastReading = values[i - 1]?.readings.find(
+        (r) => r.label === gauge.tag
+      );
+      const newReading = returnValues.readings.find(
+        (r) => r.label === gauge.tag
+      );
+
+      if (reading && lastReading && newReading) {
+        const amount = reading.value - lastReading.value;
+        if (amount >= 0) {
+          newReading.value += amount;
+        }
+      }
+    }
+  }
+
+  return returnValues;
+};

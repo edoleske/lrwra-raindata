@@ -25,7 +25,7 @@ const GaugeDetails = () => {
   );
 
   return (
-    <div className="mx-auto flex flex-col items-center justify-center gap-8 p-8 text-center lg:px-16">
+    <div className="mx-auto flex flex-col items-center justify-center gap-8 px-0 pt-4 pb-2 text-center sm:px-8 lg:px-16">
       <h1 className="text-4xl font-bold">Rain Gauge Details</h1>
       <p>
         Our rain gauges are scattered across the city of Little Rock, so we can
