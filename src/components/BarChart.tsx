@@ -51,7 +51,7 @@ const drawGraph = (
 
   const valueExtent = [
     Math.min(...data.map((d) => d.value)),
-    Math.max(...data.map((d) => d.value)),
+    Math.max(...data.map((d) => d.value), 0.1),
   ];
 
   const yScale = d3
@@ -97,9 +97,23 @@ const drawGraph = (
     .join("rect")
     .attr("class", "fill-secondary")
     .attr("x", (d) => xScale(d.date) - xBand.bandwidth() / 2)
-    .attr("y", (d) => yScale(d.value))
+    .attr("y", () => yScale(0))
     .attr("width", xBand.bandwidth())
-    .attr("height", (d) => yScale(0) - yScale(d.value));
+    .attr(
+      "height",
+      () => dimensions.height - dimensions.margin.bottom - yScale(0)
+    );
+
+  group
+    .selectAll("rect")
+    .data(data)
+    .transition()
+    .duration(900)
+    .attr("y", (d) => yScale(d.value))
+    .attr(
+      "height",
+      (d) => dimensions.height - dimensions.margin.bottom - yScale(d.value)
+    );
 };
 
 const clearGraph = (svgRef: RefObject<SVGSVGElement>) => {

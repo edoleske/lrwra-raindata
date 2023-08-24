@@ -5,6 +5,7 @@ import BarGraphParameters from "~/components/graph/BarGraphParameters";
 import useWindowDimensions from "~/hooks/useWindowDimensions";
 import { api } from "~/utils/api";
 import { RainGaugeData } from "~/utils/constants";
+import { pureDate } from "~/utils/utils";
 
 const BarChartPage = () => {
   const divRef = useRef<HTMLDivElement>(null);
@@ -40,7 +41,7 @@ const BarChartPage = () => {
     return (
       <BarChart
         data={dataQuery.data.readings.map((r) => ({
-          date: r.timestamp,
+          date: queryInput.monthData ? pureDate(r.timestamp) : r.timestamp,
           value: r.value,
         }))}
         dimensions={getChartDimensions()}
