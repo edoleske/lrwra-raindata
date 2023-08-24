@@ -49,9 +49,15 @@ interface ChartDimensions {
   margin: { top: number; right: number; bottom: number; left: number };
 }
 
-interface GraphQueryInput {
+interface LineGraphQueryInput {
   gauge: string;
   samples: number;
   startDate: Date;
   endDate: Date;
+}
+
+interface BarGraphQueryInput {
+  gauge: string;
+  monthData: boolean;
+  date: Date;
 }

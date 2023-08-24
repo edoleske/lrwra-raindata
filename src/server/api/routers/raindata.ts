@@ -9,6 +9,7 @@ import {
   format,
   isToday,
   startOfMonth,
+  sub,
 } from "date-fns";
 import { z } from "zod";
 import { connection } from "~/server/db";
@@ -29,6 +30,7 @@ import { handleError, normalizeValues } from "~/server/api/utils";
 import {
   getDayTotalAfterTime,
   getDayTotalBeforeTime,
+  getDayTotalHistory,
   getRawData,
   getRawDataAll,
   getTotalBetweenTwoDates,
@@ -131,7 +133,72 @@ export const rainDataRouter = createTRPCRouter({
         handleError(err);
       }
     }),
-  monthValues: publicProcedure
+  barHistory: publicProcedure
+    .input(
+      z.object({ monthData: z.boolean(), gauge: z.string(), date: z.date() })
+    )
+    .query(async ({ input }) => {
+      if (
+        !RainGaugeData.find((gauge) => gauge.tag.trim() !== input.gauge.trim())
+      ) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: `Unknown gauge ${input.gauge}`,
+        });
+      }
+
+      if (input.monthData) {
+        if (input.date >= startOfMonth(addMonths(new Date(), 1))) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "No data available for future months!",
+          });
+        }
+
+        const startOfCurrent = startOfMonth(input.date);
+        const startOfNext = addMonths(startOfCurrent, 1);
+
+        try {
+          const history = await getDayTotalHistory(
+            input.gauge,
+            startOfCurrent,
+            startOfNext
+          );
+          return history;
+        } catch (err) {
+          handleError(err);
+        }
+      } else {
+        if (compareAsc(input.date, new Date()) === 1) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "No data available for the future!",
+          });
+        }
+
+        const start = pureDate(input.date);
+        const end = addDays(start, 1);
+
+        try {
+          const data = await getRawData(
+            input.gauge,
+            add(start, { minutes: 14 }),
+            end,
+            15
+          );
+          const result = parseDatabaseHistory(data, input.gauge);
+          result.readings = result.readings.map((reading) => ({
+            ...reading,
+            timestamp: sub(reading.timestamp, { minutes: 14 }),
+          }));
+          result.readings = normalizeValues(result.readings);
+          return result;
+        } catch (err) {
+          handleError(err);
+        }
+      }
+    }),
+  monthTotals: publicProcedure
     .input(z.object({ month: z.date() }))
     .query(async ({ input }) => {
       if (input.month >= startOfMonth(addMonths(new Date(), 1))) {
@@ -149,7 +216,7 @@ export const rainDataRouter = createTRPCRouter({
           startOfCurrent,
           startOfNext
         );
-        return { totals };
+        return totals;
       } catch (err) {
         handleError(err);
       }

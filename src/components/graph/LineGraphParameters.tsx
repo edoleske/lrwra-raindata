@@ -2,15 +2,15 @@ import { add, compareAsc, format, isSameDay, parse, sub } from "date-fns";
 import { useState } from "react";
 import { RainGaugeData } from "~/utils/constants";
 
-interface GraphParametersProps {
-  queryInput: GraphQueryInput;
-  setQueryInput: React.Dispatch<React.SetStateAction<GraphQueryInput>>;
+interface LineGraphParametersProps {
+  queryInput: LineGraphQueryInput;
+  setQueryInput: React.Dispatch<React.SetStateAction<LineGraphQueryInput>>;
 }
 
-const GraphParameters = ({
+const LineGraphParameters = ({
   queryInput,
   setQueryInput,
-}: GraphParametersProps) => {
+}: LineGraphParametersProps) => {
   const [selectedGauge, setSelectedGauge] = useState(queryInput.gauge);
   const [samples, setSamples] = useState(queryInput.samples);
   const [startDate, setStartDate] = useState(queryInput.startDate);
@@ -148,4 +148,4 @@ const GraphParameters = ({
   );
 };
 
-export default GraphParameters;
+export default LineGraphParameters;

@@ -10,7 +10,7 @@ const MonthTotalTable = () => {
   const [month, setMonth] = useState(today());
   const [queryMonth, setQueryMonth] = useState(today());
 
-  const historyValues = api.raindata.monthValues.useQuery({
+  const historyValues = api.raindata.monthTotals.useQuery({
     month: queryMonth,
   });
 
@@ -25,7 +25,7 @@ const MonthTotalTable = () => {
   const downloadQueryResult = () => {
     if (historyValues.data) {
       let csvfile = '"Rain Gauge","Value (Inches)"\r\n';
-      historyValues.data.totals.readings.forEach((reading) => {
+      historyValues.data.readings.forEach((reading) => {
         csvfile += `"${getRainGaugeLabel(reading.label)}","${
           reading.value
         }"\r\n`;
@@ -68,7 +68,7 @@ const MonthTotalTable = () => {
           </tr>
         </thead>
         <tbody>
-          {historyValues.data.totals.readings.map((reading) => (
+          {historyValues.data.readings.map((reading) => (
             <tr key={reading.label}>
               <td>{getRainGaugeLabel(reading.label)}</td>
               <td>

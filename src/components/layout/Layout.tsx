@@ -47,10 +47,18 @@ const Layout = ({ children }: LayoutProps) => {
               </li>
               <li>
                 <Link
-                  href="/graph"
-                  className={router.asPath === "/graph" ? "active" : ""}
+                  href="/line"
+                  className={router.asPath === "/line" ? "active" : ""}
                 >
-                  Graph
+                  Dynamic Line Graph
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/bar"
+                  className={router.asPath === "/bar" ? "active" : ""}
+                >
+                  Bar Graph
                 </Link>
               </li>
               <li className="menu-title">Data</li>
@@ -79,7 +87,7 @@ const Layout = ({ children }: LayoutProps) => {
                   Gauge Info
                 </Link>
               </li>
-              <label className="swap-rotate swap btn-ghost btn-circle btn mt-auto">
+              <label className="swap btn-ghost swap-rotate btn-circle btn mt-auto">
                 <input
                   type="checkbox"
                   onChange={() =>

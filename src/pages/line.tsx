@@ -2,11 +2,11 @@ import { sub } from "date-fns";
 import React, { useRef, useState } from "react";
 import LineChart from "~/components/LineChart";
 import QueryErrorAlert from "~/components/QueryErrorAlert";
-import GraphParameters from "~/components/graph/GraphParameters";
+import LineGraphParameters from "~/components/graph/LineGraphParameters";
 import useWindowDimensions from "~/hooks/useWindowDimensions";
 import { api } from "~/utils/api";
 
-const GraphPage = () => {
+const LineGraphPage = () => {
   const divRef = useRef<HTMLDivElement>(null);
   const { height: wHeight } = useWindowDimensions();
 
@@ -51,7 +51,10 @@ const GraphPage = () => {
 
   return (
     <>
-      <GraphParameters queryInput={queryInput} setQueryInput={setQueryInput} />
+      <LineGraphParameters
+        queryInput={queryInput}
+        setQueryInput={setQueryInput}
+      />
       <div className="min-w-sm" ref={divRef}>
         {Chart()}
       </div>
@@ -59,4 +62,4 @@ const GraphPage = () => {
   );
 };
 
-export default GraphPage;
+export default LineGraphPage;

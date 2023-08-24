@@ -5,7 +5,11 @@ import {
   assertHistorianValuesSingle,
 } from "../typeValidation";
 import { RainGaugeData } from "~/utils/constants";
-import { iHistFormatDT, parseDatabaseValues } from "~/utils/utils";
+import {
+  iHistFormatDT,
+  parseDatabaseHistory,
+  parseDatabaseValues,
+} from "~/utils/utils";
 import { collectAllGaugeValuesIntoTotals } from "./utils";
 
 export const getRawData = async (
@@ -67,6 +71,31 @@ export const getRawDataAll = async (start: Date, end: Date, frequency = 1) => {
   }
 
   return result;
+};
+
+export const getDayTotalHistory = async (
+  gauge: string,
+  start: Date,
+  end: Date
+) => {
+  let queryString = `
+    SELECT 
+    ${gauge}.F_CV.VALUE, ${gauge}.F_CV.QUALITY, timestamp
+    FROM IHTREND
+    WHERE samplingmode = 'rawbytime' AND
+  `;
+
+  const timestampFilters: string[] = [];
+  for (let i = start; isBefore(i, end); i = addDays(i, 1)) {
+    timestampFilters.push(`(
+      TIMESTAMP >= '${iHistFormatDT(i)}' AND 
+      TIMESTAMP <= '${iHistFormatDT(i)}')`);
+  }
+  queryString += timestampFilters.join(" OR ");
+
+  const result = await connection.query(queryString);
+  assertHistorianValuesSingle(result, gauge);
+  return parseDatabaseHistory(result, gauge);
 };
 
 export const getTotalBetweenTwoDates = async (start: Date, end: Date) => {
