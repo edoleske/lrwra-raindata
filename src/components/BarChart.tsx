@@ -10,6 +10,7 @@ interface BarChartProps {
 
 const drawGraph = (
   svgRef: RefObject<SVGSVGElement>,
+  tooltipRef: RefObject<HTMLDivElement>,
   data: ChartDataPoint[],
   dimensions: ChartDimensions
 ) => {
@@ -27,12 +28,11 @@ const drawGraph = (
   const minTime = Math.min(...timeDomain);
   const maxTime = Math.max(...timeDomain);
   // Subtract one time tick so bars don't intersect y axis
-  const timeExtent = [
+  const adjMinTime =
     maxTime - minTime > 86400001
       ? subDays(new Date(minTime), 1)
-      : subHours(new Date(minTime), 1),
-    new Date(maxTime),
-  ];
+      : subHours(new Date(minTime), 1);
+  const timeExtent = [adjMinTime, new Date(maxTime)];
   timeExtent.forEach((d) => d.getTime());
 
   const xScale = d3
@@ -97,23 +97,63 @@ const drawGraph = (
     .join("rect")
     .attr("class", "fill-secondary")
     .attr("x", (d) => xScale(d.date) - xBand.bandwidth() / 2)
-    .attr("y", () => yScale(0))
-    .attr("width", xBand.bandwidth())
-    .attr(
-      "height",
-      () => dimensions.height - dimensions.margin.bottom - yScale(0)
-    );
-
-  group
-    .selectAll("rect")
-    .data(data)
-    .transition()
-    .duration(900)
     .attr("y", (d) => yScale(d.value))
+    .attr("width", xBand.bandwidth())
     .attr(
       "height",
       (d) => dimensions.height - dimensions.margin.bottom - yScale(d.value)
     );
+
+  const tooltip = d3
+    .select(tooltipRef.current)
+    .style("display", "none")
+    .html("<p></p><p></p>");
+
+  group
+    .selectAll("rect")
+    .on("mouseover", () => {
+      tooltip.style("display", "block");
+    })
+    .on("mousemove", (mouse: MouseEvent) => {
+      const [x] = d3.pointer(mouse);
+
+      tooltip
+        .style("top", `${mouse.pageY - 30}px`)
+        .style(
+          "left",
+          `${mouse.pageX - (maxTime - minTime > 86400001 ? 164 : 136)}px`
+        );
+
+      // We must find the closest date point to the pointer, via the date key
+      // To tie the dates with the mouse position on the chart, we take the normalized mouse position and compare it to the normalized dates in the domain
+      const ratio = (x - dimensions.margin.left) / boundedWidth;
+      const dataKeyRatios = data.map(
+        (d) =>
+          (d.date.getTime() - adjMinTime.getTime()) /
+          (maxTime - adjMinTime.getTime())
+      );
+      const dataKeyRatioDeltas = dataKeyRatios.map((dr) =>
+        Math.abs(dr - ratio)
+      );
+      const dataIndex = dataKeyRatioDeltas.indexOf(
+        Math.min(...dataKeyRatioDeltas)
+      );
+      const closestDataPoint = data[dataIndex];
+
+      if (closestDataPoint) {
+        tooltip.html(
+          `<p>${format(
+            closestDataPoint.date,
+            maxTime - minTime > 86400001 ? "PP" : "p"
+          )}</p><p>${closestDataPoint.value.toFixed(2)}"</p>`
+        );
+      } else {
+        tooltip.html(`<p>Loading...</p>`);
+      }
+    })
+    .on("mouseout", () => {
+      tooltip.style("display", "none");
+    });
 };
 
 const clearGraph = (svgRef: RefObject<SVGSVGElement>) => {
@@ -123,10 +163,11 @@ const clearGraph = (svgRef: RefObject<SVGSVGElement>) => {
 
 const BarChart = ({ data, dimensions }: BarChartProps) => {
   const svgRef = useRef<SVGSVGElement>(null);
+  const tooltipRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (data) {
-      drawGraph(svgRef, data, dimensions);
+      drawGraph(svgRef, tooltipRef, data, dimensions);
     }
 
     return () => {
@@ -145,6 +186,10 @@ const BarChart = ({ data, dimensions }: BarChartProps) => {
   return (
     <div className="">
       <svg ref={svgRef} className="m-auto bg-base-100 text-base-content"></svg>
+      <div
+        ref={tooltipRef}
+        className="absolute rounded border border-base-content bg-base-200 px-8 py-4 text-center"
+      ></div>
     </div>
   );
 };
