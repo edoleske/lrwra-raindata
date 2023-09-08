@@ -1,3 +1,4 @@
+import { sub } from "date-fns";
 import { useRef, useState } from "react";
 import BarChart from "~/components/BarChart";
 import QueryErrorAlert from "~/components/QueryErrorAlert";
@@ -13,7 +14,7 @@ const BarChartPage = () => {
 
   const [queryInput, setQueryInput] = useState({
     monthData: true,
-    date: new Date(),
+    date: sub(new Date(), { months: 1 }),
     gauge: RainGaugeData[0]?.tag ?? "",
   });
 
