@@ -1,14 +1,21 @@
 import { format, parse, sub } from "date-fns";
-import { useState } from "react";
+import { useContext, useState } from "react";
 import { api } from "~/utils/api";
 import { getRainGaugeLabel, today } from "~/utils/utils";
 import QueryErrorAlert from "~/components/QueryErrorAlert";
 import { MdDownload } from "react-icons/md";
 import { saveAs } from "file-saver";
+import { GlobalAlertContext } from "../globalAlerts/GlobalAlertProvider";
 
 const CustomTotalTable = () => {
-  const [startDate, setStartDate] = useState(sub(new Date(), { days: 2 }));
-  const [endDate, setEndDate] = useState(new Date());
+  const addAlert = useContext(GlobalAlertContext);
+
+  const [startDate, setStartDate] = useState(
+    format(sub(new Date(), { days: 2 }), "yyyy-MM-dd'T'HH:mm")
+  );
+  const [endDate, setEndDate] = useState(
+    format(new Date(), "yyyy-MM-dd'T'HH:mm")
+  );
 
   const [queryStartDate, setQueryStartDate] = useState(
     sub(today(), { days: 2 })
@@ -16,8 +23,15 @@ const CustomTotalTable = () => {
   const [queryEndDate, setQueryEndDate] = useState(today());
 
   const updateQuery = () => {
-    setQueryStartDate(startDate);
-    setQueryEndDate(endDate);
+    try {
+      const start = parse(startDate, "yyyy-MM-dd'T'HH:mm", new Date());
+      const end = parse(endDate, "yyyy-MM-dd'T'HH:mm", new Date());
+      setQueryStartDate(start);
+      setQueryEndDate(end);
+    } catch (error) {
+      addAlert(String(error), "error");
+      console.error(error);
+    }
   };
 
   const historyValues = api.raindata.valueTotal.useQuery({
@@ -78,7 +92,7 @@ const CustomTotalTable = () => {
             <tr key={reading.label}>
               <td>{getRainGaugeLabel(reading.label)}</td>
               <td>
-                {reading.value === 0 ? 0 : reading.value.toFixed(2)}&quot;
+                {reading.value === 0 ? 0 : reading.value?.toFixed(2)}&quot;
               </td>
             </tr>
           ))}
@@ -100,12 +114,8 @@ const CustomTotalTable = () => {
           <input
             type="datetime-local"
             className="input-bordered input w-full"
-            value={format(startDate, "yyyy-MM-dd'T'HH:mm")}
-            onChange={(event) =>
-              setStartDate(
-                parse(event.target.value, "yyyy-MM-dd'T'HH:mm", new Date())
-              )
-            }
+            value={startDate}
+            onChange={(event) => setStartDate(event.target.value)}
           />
         </div>
         <div className="m-auto max-w-xs">
@@ -115,19 +125,17 @@ const CustomTotalTable = () => {
           <input
             type="datetime-local"
             className="input-bordered input w-full"
-            value={format(endDate, "yyyy-MM-dd'T'HH:mm")}
-            onChange={(event) =>
-              setEndDate(
-                parse(event.target.value, "yyyy-MM-dd'T'HH:mm", new Date())
-              )
-            }
+            value={endDate}
+            onChange={(event) => setEndDate(event.target.value)}
           />
         </div>
         <div className="p-4"></div>
         <div className="flex w-full justify-center">
           <div
             className={`btn-primary btn ${
-              startDate === queryStartDate && endDate === queryEndDate
+              parse(startDate, "yyyy-MM-dd'T'HH:mm", new Date()) ===
+                queryStartDate &&
+              parse(endDate, "yyyy-MM-dd'T'HH:mm", new Date()) === queryEndDate
                 ? "btn-disabled"
                 : ""
             }`}

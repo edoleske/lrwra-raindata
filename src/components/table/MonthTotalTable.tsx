@@ -1,25 +1,30 @@
 import { format, parse } from "date-fns";
-import { useState } from "react";
+import { useState, useContext } from "react";
 import { api } from "~/utils/api";
 import { getRainGaugeLabel, today } from "~/utils/utils";
 import QueryErrorAlert from "~/components/QueryErrorAlert";
 import { MdDownload } from "react-icons/md";
 import { saveAs } from "file-saver";
+import { GlobalAlertContext } from "../globalAlerts/GlobalAlertProvider";
 
 const MonthTotalTable = () => {
-  const [month, setMonth] = useState(today());
+  const addAlert = useContext(GlobalAlertContext);
+
+  const [month, setMonth] = useState(format(today(), "yyyy-MM-dd"));
   const [queryMonth, setQueryMonth] = useState(today());
 
   const historyValues = api.raindata.monthTotals.useQuery({
     month: queryMonth,
   });
 
-  const onDateChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    let newDate = parse(event.target.value, "yyyy-MM-dd", new Date());
-    if (newDate >= new Date()) {
-      newDate = new Date();
+  const updateQuery = () => {
+    try {
+      const newMonth = parse(month, "yyyy-MM-dd", new Date());
+      setQueryMonth(newMonth);
+    } catch (error) {
+      addAlert(String(error), "error");
+      console.error(error);
     }
-    setMonth(newDate);
   };
 
   const downloadQueryResult = () => {
@@ -94,17 +99,19 @@ const MonthTotalTable = () => {
           <input
             type="date"
             className="input-bordered input w-full"
-            value={format(month, "yyyy-MM-dd")}
-            onChange={onDateChange}
+            value={month}
+            onChange={(event) => setMonth(event.target.value)}
           />
         </div>
         <div className="p-4"></div>
         <div className="flex w-full justify-center">
           <div
             className={`btn-primary btn ${
-              month === queryMonth ? "btn-disabled" : ""
+              parse(month, "yyyy-MM-dd", new Date()) === queryMonth
+                ? "btn-disabled"
+                : ""
             }`}
-            onClick={() => setQueryMonth(month)}
+            onClick={updateQuery}
           >
             Update
           </div>

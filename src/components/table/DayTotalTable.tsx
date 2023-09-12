@@ -1,14 +1,27 @@
 import { format, parse } from "date-fns";
 import { saveAs } from "file-saver";
-import { useState } from "react";
+import { useContext, useState } from "react";
 import { api } from "~/utils/api";
 import { getRainGaugeLabel, today } from "~/utils/utils";
 import QueryErrorAlert from "../QueryErrorAlert";
 import { MdDownload } from "react-icons/md";
+import { GlobalAlertContext } from "../globalAlerts/GlobalAlertProvider";
 
 const DayTotalTable = () => {
-  const [date, setDate] = useState(today());
+  const addAlert = useContext(GlobalAlertContext);
+
+  const [date, setDate] = useState(format(today(), "yyyy-MM-dd"));
   const [queryDate, setQueryDate] = useState(today());
+
+  const updateQuery = () => {
+    try {
+      const newDate = parse(date, "yyyy-MM-dd", new Date());
+      setQueryDate(newDate);
+    } catch (error) {
+      addAlert(String(error), "error");
+      console.error(error);
+    }
+  };
 
   const historyValues = api.raindata.dateValues.useQuery({
     date: queryDate,
@@ -86,19 +99,19 @@ const DayTotalTable = () => {
           <input
             type="date"
             className="input-bordered input w-full"
-            value={format(date, "yyyy-MM-dd")}
-            onChange={(event) =>
-              setDate(parse(event.target.value, "yyyy-MM-dd", new Date()))
-            }
+            value={date}
+            onChange={(event) => setDate(event.target.value)}
           />
         </div>
         <div className="p-4"></div>
         <div className="flex w-full justify-center">
           <div
             className={`btn-primary btn ${
-              date === queryDate ? "btn-disabled" : ""
+              parse(date, "yyyy-MM-dd", new Date()) === queryDate
+                ? "btn-disabled"
+                : ""
             }`}
-            onClick={() => setQueryDate(date)}
+            onClick={updateQuery}
           >
             Update
           </div>
