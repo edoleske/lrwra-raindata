@@ -12,8 +12,8 @@ const DownloadPage = () => {
 
   const [selectedGauge, setSelectedGauge] = useState("all");
   const [dateRange, setDateRange] = useState(false);
-  const [startDate, setStartDate] = useState(new Date());
-  const [endDate, setEndDate] = useState(new Date());
+  const [startDate, setStartDate] = useState(format(new Date(), "yyyy-MM-dd"));
+  const [endDate, setEndDate] = useState(format(new Date(), "yyyy-MM-dd"));
   const [frequency, setFrequency] = useState(1);
   const fileMutation = api.raindata.downloadCSV.useMutation();
 
@@ -21,8 +21,8 @@ const DownloadPage = () => {
     const result = await fileMutation.mutateAsync(
       {
         gauge: selectedGauge,
-        startDate: startDate,
-        endDate: endDate,
+        startDate: parse(startDate, "yyyy-MM-dd", new Date()),
+        endDate: parse(endDate, "yyyy-MM-dd", new Date()),
         frequency: frequency,
       },
       { onError: (error) => addAlert(error.message, "error") }
@@ -30,9 +30,9 @@ const DownloadPage = () => {
 
     if (result) {
       const gaugeString = getRainGaugeLabelShort(selectedGauge, true);
-      let dateString = format(startDate, "yyyyMMdd");
+      let dateString = startDate.replace("-", "");
       if (dateRange) {
-        dateString += "-" + format(endDate, "yyyyMMdd");
+        dateString += "-" + endDate.replace("-", "");
       }
       const filename =
         "LRWRA_" + gaugeString + "RainData_" + dateString + ".csv";
@@ -41,6 +41,22 @@ const DownloadPage = () => {
       // Uses file-saver library to use best practive file download on most browsers
       saveAs(blob, filename);
     }
+  };
+
+  const isValid = () => {
+    const start = parse(startDate, "yyyy-MM-dd", new Date());
+    const end = parse(endDate, "yyyy-MM-dd", new Date());
+
+    // If start is after end
+    // Or both start and end are after current date
+    if (
+      compareAsc(start, end) === 1 ||
+      (compareAsc(new Date(), end) !== 1 && compareAsc(new Date(), start) !== 1)
+    ) {
+      return false;
+    }
+
+    return true;
   };
 
   const toggleDateRange = () => {
@@ -53,42 +69,16 @@ const DownloadPage = () => {
   };
 
   const onDateChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const value = parse(event.target.value, "yyyy-MM-dd", new Date());
-
-    // If new date is after current date
-    if (compareAsc(value, new Date()) === 1) {
-      setStartDate(new Date());
-      setEndDate(new Date());
-    } else {
-      setStartDate(value);
-      setEndDate(value);
-    }
+    setStartDate(event.target.value);
+    setEndDate(event.target.value);
   };
 
   const onStartDateChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const value = parse(event.target.value, "yyyy-MM-dd", new Date());
-
-    // If new date is before end date
-    if (compareAsc(value, endDate) === -1) {
-      setStartDate(value);
-    } else {
-      setStartDate(endDate);
-    }
+    setStartDate(event.target.value);
   };
 
   const onEndDateChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const value = parse(event.target.value, "yyyy-MM-dd", new Date());
-
-    // If new date is after end date
-    if (compareAsc(value, startDate) === 1) {
-      if (compareAsc(value, new Date()) === 1) {
-        setEndDate(new Date());
-      } else {
-        setEndDate(value);
-      }
-    } else {
-      setEndDate(startDate);
-    }
+    setEndDate(event.target.value);
   };
 
   const DateForm = () => {
@@ -103,7 +93,7 @@ const DownloadPage = () => {
               <input
                 type="date"
                 className="input-bordered input w-full"
-                value={format(startDate, "yyyy-MM-dd")}
+                value={startDate}
                 onChange={onStartDateChange}
               />
             </div>
@@ -121,7 +111,7 @@ const DownloadPage = () => {
             <input
               type="date"
               className="input-bordered input w-full"
-              value={format(endDate, "yyyy-MM-dd")}
+              value={endDate}
               onChange={onEndDateChange}
             />
           </div>
@@ -137,7 +127,7 @@ const DownloadPage = () => {
             <input
               type="date"
               className="input-bordered input w-full"
-              value={format(startDate, "yyyy-MM-dd")}
+              value={startDate}
               onChange={onDateChange}
             />
           </div>
@@ -219,7 +209,10 @@ const DownloadPage = () => {
         is reset at the beginning of every day.
       </p>
       {Form()}
-      <div className="btn-primary btn" onClick={onClick}>
+      <div
+        className={`btn-primary btn ${isValid() ? "" : "btn-disabled"}`}
+        onClick={onClick}
+      >
         Download
       </div>
     </div>

@@ -362,6 +362,16 @@ export const rainDataRouter = createTRPCRouter({
       const start = pureDate(input.startDate);
       const end = addDays(pureDate(input.endDate), 1);
 
+      if (
+        compareAsc(new Date(), start) !== 1 &&
+        compareAsc(new Date(), end) !== 1
+      ) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: `No data available for the future.`,
+        });
+      }
+
       if (compareAsc(end, start) !== 1) {
         throw new TRPCError({
           code: "BAD_REQUEST",
