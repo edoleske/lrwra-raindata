@@ -98,6 +98,29 @@ export const getDayTotalHistory = async (
   return parseDatabaseHistory(result, gauge);
 };
 
+export const getDayTotalHistoryAll = async (start: Date, end: Date) => {
+  let queryString = `
+    SELECT 
+    ${RainGaugeData.map(
+      (gauge) => `${gauge.tag}.F_CV.VALUE, ${gauge.tag}.F_CV.QUALITY, `
+    ).join("")} timestamp
+    FROM IHTREND
+    WHERE samplingmode = 'rawbytime' AND
+  `;
+
+  const timestampFilters: string[] = [];
+  for (let i = start; isBefore(i, end); i = addDays(i, 1)) {
+    timestampFilters.push(`(
+      TIMESTAMP >= '${iHistFormatDT(i)}' AND 
+      TIMESTAMP <= '${iHistFormatDT(i)}')`);
+  }
+  queryString += timestampFilters.join(" OR ");
+
+  const result = await connection.query(queryString);
+  assertHistorianValuesAll(result);
+  return result.map((r) => parseDatabaseValues(r));
+};
+
 export const getTotalBetweenTwoDates = async (start: Date, end: Date) => {
   let queryString = `
     SELECT 

@@ -15,18 +15,30 @@ const DownloadPage = () => {
   const [startDate, setStartDate] = useState(format(new Date(), "yyyy-MM-dd"));
   const [endDate, setEndDate] = useState(format(new Date(), "yyyy-MM-dd"));
   const [frequency, setFrequency] = useState(1);
-  const fileMutation = api.raindata.downloadCSV.useMutation();
+
+  const fileMutation = api.download.downloadCSV.useMutation();
+  const dailyFileMutation = api.download.downloadDailyCSV.useMutation();
 
   const onClick = async () => {
-    const result = await fileMutation.mutateAsync(
-      {
-        gauge: selectedGauge,
-        startDate: parse(startDate, "yyyy-MM-dd", new Date()),
-        endDate: parse(endDate, "yyyy-MM-dd", new Date()),
-        frequency: frequency,
-      },
-      { onError: (error) => addAlert(error.message, "error") }
-    );
+    const result =
+      frequency >= 86400
+        ? await dailyFileMutation.mutateAsync(
+            {
+              gauge: selectedGauge,
+              startDate: parse(startDate, "yyyy-MM-dd", new Date()),
+              endDate: parse(endDate, "yyyy-MM-dd", new Date()),
+            },
+            { onError: (error) => addAlert(error.message, "error") }
+          )
+        : await fileMutation.mutateAsync(
+            {
+              gauge: selectedGauge,
+              startDate: parse(startDate, "yyyy-MM-dd", new Date()),
+              endDate: parse(endDate, "yyyy-MM-dd", new Date()),
+              frequency: frequency,
+            },
+            { onError: (error) => addAlert(error.message, "error") }
+          );
 
     if (result) {
       const gaugeString = getRainGaugeLabelShort(selectedGauge, true);
@@ -176,6 +188,7 @@ const DownloadPage = () => {
           <option value={15}>Every 15 minutes</option>
           <option value={30}>Every 30 minutes</option>
           <option value={60}>Every hour</option>
+          <option value={86400}>Daily</option>
         </select>
       </div>
     </div>
