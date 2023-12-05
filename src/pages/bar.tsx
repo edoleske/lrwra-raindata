@@ -5,7 +5,6 @@ import QueryErrorAlert from "~/components/QueryErrorAlert";
 import BarGraphParameters from "~/components/graph/BarGraphParameters";
 import useWindowDimensions from "~/hooks/useWindowDimensions";
 import { api } from "~/utils/api";
-import { RainGaugeData } from "~/utils/constants";
 import { pureDate } from "~/utils/utils";
 
 const BarChartPage = () => {
@@ -15,7 +14,7 @@ const BarChartPage = () => {
   const [queryInput, setQueryInput] = useState({
     monthData: true,
     date: sub(new Date(), { months: 1 }),
-    gauge: RainGaugeData[0]?.tag ?? "",
+    gauge: "",
   });
 
   const dataQuery = api.raindata.barHistory.useQuery(queryInput);

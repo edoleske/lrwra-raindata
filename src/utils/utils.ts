@@ -1,5 +1,4 @@
 import { format, isToday, sub } from "date-fns";
-import { RainGaugeData } from "./constants";
 
 // Utility function to get new Date object with time zeroed out
 export const today = () => {
@@ -21,7 +20,11 @@ export const pureDate = (d: Date) => {
 };
 
 // Utility function to convert gauge tag to label
-export const getRainGaugeLabel = (tag: string) => {
+export const getRainGaugeLabel = (
+  tag: string,
+  RainGaugeData: RainGaugeInfo[] | undefined
+) => {
+  if (!RainGaugeData) return "";
   const gauge = RainGaugeData.find((rg) => rg.tag === tag);
   if (gauge) {
     return gauge.label;
@@ -31,10 +34,17 @@ export const getRainGaugeLabel = (tag: string) => {
 };
 
 // Utility function to convert gauge tag to short label
-export const getRainGaugeLabelShort = (tag: string, stripSpace = false) => {
+export const getRainGaugeLabelShort = (
+  tag: string,
+  RainGaugeData: RainGaugeInfo[] | undefined,
+  stripSpace = false
+) => {
+  if (!RainGaugeData) return "";
   const gauge = RainGaugeData.find((rg) => rg.tag === tag);
   if (gauge) {
-    return stripSpace ? gauge.short.replace(/\s/g, "") : gauge.short;
+    return stripSpace
+      ? gauge.label_short.replace(/\s/g, "")
+      : gauge.label_short;
   } else {
     return tag;
   }
@@ -48,7 +58,10 @@ export const iHistFormatDT = (date: Date) =>
     : `${format(date, "MM/dd/yyyy")} 23:59:00`;
 
 // This function parses response from IHistorian with a value for every gauge
-export const parseDatabaseValues = (dbValues: IHistValues): AllGaugeValues => {
+export const parseDatabaseValues = (
+  dbValues: IHistValues,
+  RainGaugeData: RainGaugeInfo[]
+): AllGaugeValues => {
   return {
     timestamp: new Date(dbValues.timestamp),
     readings: RainGaugeData.map((gauge) => {

@@ -5,6 +5,15 @@ type GlobalAlert = {
   severity: AlertSeverity;
 };
 
+type RainGaugeInfo = {
+  tag: string;
+  label: string;
+  label_short: string;
+  label_long: string;
+  address: string;
+  coordinates: string;
+};
+
 interface LabeledReading {
   label: string;
   value: number;

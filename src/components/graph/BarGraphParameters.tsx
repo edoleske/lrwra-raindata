@@ -1,6 +1,6 @@
 import { compareAsc, format, isSameDay, parse } from "date-fns";
 import { useState } from "react";
-import { RainGaugeData } from "~/utils/constants";
+import { api } from "~/utils/api";
 
 interface GraphParametersProps {
   queryInput: BarGraphQueryInput;
@@ -14,6 +14,8 @@ const BarGraphParameters = ({
   const [selectedGauge, setSelectedGauge] = useState(queryInput.gauge);
   const [monthData, setMonthData] = useState(queryInput.monthData);
   const [date, setDate] = useState(queryInput.date);
+
+  const rainGauges = api.raindata.rainGauges.useQuery();
 
   const updateQueryInput = () => {
     setQueryInput({
@@ -53,7 +55,7 @@ const BarGraphParameters = ({
           value={selectedGauge}
           onChange={(e) => setSelectedGauge(e.target.value)}
         >
-          {RainGaugeData.map((gauge, index) => (
+          {rainGauges.data?.map((gauge, index) => (
             <option key={index} value={gauge.tag}>
               {gauge.label}
             </option>

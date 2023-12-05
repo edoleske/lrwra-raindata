@@ -3,7 +3,6 @@ import { addDays, compareAsc, differenceInDays, format } from "date-fns";
 import { z } from "zod";
 
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
-import { RainGaugeData } from "~/utils/constants";
 import {
   getRainGaugeLabel,
   parseDatabaseHistory,
@@ -13,6 +12,7 @@ import {
 import {
   getDayTotalHistory,
   getDayTotalHistoryAll,
+  getRainGauges,
   getRawData,
   getRawDataAll,
 } from "../queries";
@@ -58,22 +58,23 @@ export const downloadRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ input }) => {
-      if (
-        !RainGaugeData.find((rg) => rg.tag.trim() === input.gauge.trim()) &&
-        input.gauge !== "all"
-      ) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: `Unknown rain gauge ${input.gauge}`,
-        });
-      }
-
-      const start = pureDate(input.startDate);
-      const end = addDays(pureDate(input.endDate), 1);
-
-      validateDates(start, end);
-
       try {
+        const RainGaugeData = await getRainGauges();
+        if (
+          !RainGaugeData.find((rg) => rg.tag.trim() === input.gauge.trim()) &&
+          input.gauge !== "all"
+        ) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: `Unknown rain gauge ${input.gauge}`,
+          });
+        }
+
+        const start = pureDate(input.startDate);
+        const end = addDays(pureDate(input.endDate), 1);
+
+        validateDates(start, end);
+
         let csvfile = "";
         if (input.gauge === "all") {
           const result = await getRawDataAll(
@@ -81,7 +82,9 @@ export const downloadRouter = createTRPCRouter({
             end,
             input.frequency ? input.frequency : 1
           );
-          const history = result.map((r) => parseDatabaseValues(r));
+          const history = result.map((r) =>
+            parseDatabaseValues(r, RainGaugeData)
+          );
 
           // Generate CSV file as string
           csvfile = `"Timestamp",${RainGaugeData.map(
@@ -111,10 +114,12 @@ export const downloadRouter = createTRPCRouter({
           // Generate CSV file as string
           csvfile = '"Rain Gauge","Timestamp","Value","Quality"\r\n';
           history.readings.forEach((reading) => {
-            csvfile += `"${getRainGaugeLabel(history.label)}","${format(
-              reading.timestamp,
-              "yyyy-MM-dd HH:mm:ss"
-            )}","${reading.value}","${reading.quality}"\r\n`;
+            csvfile += `"${getRainGaugeLabel(
+              history.label,
+              RainGaugeData
+            )}","${format(reading.timestamp, "yyyy-MM-dd HH:mm:ss")}","${
+              reading.value
+            }","${reading.quality}"\r\n`;
           });
         }
         return csvfile;
@@ -131,22 +136,22 @@ export const downloadRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ input }) => {
-      if (
-        !RainGaugeData.find((rg) => rg.tag.trim() === input.gauge.trim()) &&
-        input.gauge !== "all"
-      ) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: `Unknown rain gauge ${input.gauge}`,
-        });
-      }
-
-      const start = pureDate(input.startDate);
-      const end = addDays(pureDate(input.endDate), 1);
-
-      validateDates(start, end);
-
       try {
+        const RainGaugeData = await getRainGauges();
+        if (
+          !RainGaugeData.find((rg) => rg.tag.trim() === input.gauge.trim()) &&
+          input.gauge !== "all"
+        ) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: `Unknown rain gauge ${input.gauge}`,
+          });
+        }
+
+        const start = pureDate(input.startDate);
+        const end = addDays(pureDate(input.endDate), 1);
+
+        validateDates(start, end);
         let csvfile = "";
         if (input.gauge === "all") {
           // Get all gauge history
@@ -175,10 +180,12 @@ export const downloadRouter = createTRPCRouter({
           // Generate CSV file as string
           csvfile = '"Rain Gauge","Timestamp","Value","Quality"\r\n';
           history.readings.forEach((reading) => {
-            csvfile += `"${getRainGaugeLabel(history.label)}","${format(
-              reading.timestamp,
-              "yyyy-MM-dd HH:mm:ss"
-            )}","${reading.value}","${reading.quality}"\r\n`;
+            csvfile += `"${getRainGaugeLabel(
+              history.label,
+              RainGaugeData
+            )}","${format(reading.timestamp, "yyyy-MM-dd HH:mm:ss")}","${
+              reading.value
+            }","${reading.quality}"\r\n`;
           });
         }
         return csvfile;

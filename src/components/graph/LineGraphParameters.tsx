@@ -1,6 +1,6 @@
 import { add, compareAsc, format, isSameDay, parse, sub } from "date-fns";
 import { useState } from "react";
-import { RainGaugeData } from "~/utils/constants";
+import { api } from "~/utils/api";
 
 interface LineGraphParametersProps {
   queryInput: LineGraphQueryInput;
@@ -15,6 +15,8 @@ const LineGraphParameters = ({
   const [samples, setSamples] = useState(queryInput.samples);
   const [startDate, setStartDate] = useState(queryInput.startDate);
   const [endDate, setEndDate] = useState(queryInput.endDate);
+
+  const rainGauges = api.raindata.rainGauges.useQuery();
 
   const updateQueryInput = () => {
     setQueryInput({
@@ -85,7 +87,7 @@ const LineGraphParameters = ({
           value={selectedGauge}
           onChange={(e) => setSelectedGauge(e.target.value)}
         >
-          {RainGaugeData.map((gauge, index) => (
+          {rainGauges.data?.map((gauge, index) => (
             <option key={index} value={gauge.tag}>
               {gauge.label}
             </option>

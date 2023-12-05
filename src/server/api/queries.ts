@@ -4,13 +4,25 @@ import {
   assertHistorianValuesAll,
   assertHistorianValuesSingle,
 } from "../typeValidation";
-import { RainGaugeData } from "~/utils/constants";
 import {
   iHistFormatDT,
   parseDatabaseHistory,
   parseDatabaseValues,
 } from "~/utils/utils";
 import { collectAllGaugeValuesIntoTotals } from "./utils";
+import { rainDataDB } from "../knex";
+
+export const getRainGauges = async () => {
+  const result: RainGaugeInfo[] = await rainDataDB("gauges").select(
+    "tag",
+    "label",
+    "label_short",
+    "label_long",
+    "address",
+    "coordinates"
+  );
+  return result;
+};
 
 export const getRawData = async (
   gauge: string,
@@ -47,6 +59,8 @@ export const getRawData = async (
 export const getRawDataAll = async (start: Date, end: Date, frequency = 1) => {
   let result: IHistValues[] = [];
 
+  const gauges = await getRainGauges();
+
   for (let d = start; d.getTime() < end.getTime(); d = add(d, { days: 2 })) {
     // If we're at the last iteration, filter the timestamp to the input end date instead of adding two days
     const endPlusTwo = add(d, { days: 2 });
@@ -54,9 +68,11 @@ export const getRawDataAll = async (start: Date, end: Date, frequency = 1) => {
 
     const queryString = `
       SELECT
-        ${RainGaugeData.map(
-          (gauge) => `${gauge.tag}.F_CV.VALUE, ${gauge.tag}.F_CV.QUALITY, `
-        ).join("")} timestamp
+        ${gauges
+          .map(
+            (gauge) => `${gauge.tag}.F_CV.VALUE, ${gauge.tag}.F_CV.QUALITY, `
+          )
+          .join("")} timestamp
       FROM IHTREND
       WHERE samplingmode = interpolated AND 
         intervalmilliseconds = ${60000 * frequency} AND 
@@ -66,7 +82,7 @@ export const getRawDataAll = async (start: Date, end: Date, frequency = 1) => {
     `;
 
     const queryResult = await connection.query(queryString);
-    assertHistorianValuesAll(queryResult);
+    assertHistorianValuesAll(queryResult, gauges);
     result = result.concat(queryResult);
   }
 
@@ -99,11 +115,13 @@ export const getDayTotalHistory = async (
 };
 
 export const getDayTotalHistoryAll = async (start: Date, end: Date) => {
+  const gauges = await getRainGauges();
+
   let queryString = `
     SELECT 
-    ${RainGaugeData.map(
-      (gauge) => `${gauge.tag}.F_CV.VALUE, ${gauge.tag}.F_CV.QUALITY, `
-    ).join("")} timestamp
+    ${gauges
+      .map((gauge) => `${gauge.tag}.F_CV.VALUE, ${gauge.tag}.F_CV.QUALITY, `)
+      .join("")} timestamp
     FROM IHTREND
     WHERE samplingmode = 'rawbytime' AND
   `;
@@ -117,16 +135,18 @@ export const getDayTotalHistoryAll = async (start: Date, end: Date) => {
   queryString += timestampFilters.join(" OR ");
 
   const result = await connection.query(queryString);
-  assertHistorianValuesAll(result);
-  return result.map((r) => parseDatabaseValues(r));
+  assertHistorianValuesAll(result, gauges);
+  return result.map((r) => parseDatabaseValues(r, gauges));
 };
 
 export const getTotalBetweenTwoDates = async (start: Date, end: Date) => {
+  const gauges = await getRainGauges();
+
   let queryString = `
     SELECT 
-    ${RainGaugeData.map(
-      (gauge) => `${gauge.tag}.F_CV.VALUE, ${gauge.tag}.F_CV.QUALITY, `
-    ).join("")} timestamp
+    ${gauges
+      .map((gauge) => `${gauge.tag}.F_CV.VALUE, ${gauge.tag}.F_CV.QUALITY, `)
+      .join("")} timestamp
     FROM IHTREND
     WHERE samplingmode = 'rawbytime' AND
   `;
@@ -140,8 +160,8 @@ export const getTotalBetweenTwoDates = async (start: Date, end: Date) => {
   queryString += timestampFilters.join(" OR ");
 
   const result = await connection.query(queryString);
-  assertHistorianValuesAll(result);
-  const parsedResult = result.map((r) => parseDatabaseValues(r));
+  assertHistorianValuesAll(result, gauges);
+  const parsedResult = result.map((r) => parseDatabaseValues(r, gauges));
 
   const totals: AllGaugeTotals = {
     startDate: start,
@@ -153,7 +173,7 @@ export const getTotalBetweenTwoDates = async (start: Date, end: Date) => {
     throw new Error("No data returned from database!");
   }
 
-  totals.readings = RainGaugeData.map((gauge) => ({
+  totals.readings = gauges.map((gauge) => ({
     label: gauge.tag,
     value: parsedResult.reduce(
       (previous, a) =>
@@ -166,11 +186,13 @@ export const getTotalBetweenTwoDates = async (start: Date, end: Date) => {
 };
 
 export const getDayTotalBeforeTime = async (date: Date) => {
+  const gauges = await getRainGauges();
+
   const queryString = `
     SELECT 
-    ${RainGaugeData.map(
-      (gauge) => `${gauge.tag}.F_CV.VALUE, ${gauge.tag}.F_CV.QUALITY, `
-    ).join("")} timestamp
+    ${gauges
+      .map((gauge) => `${gauge.tag}.F_CV.VALUE, ${gauge.tag}.F_CV.QUALITY, `)
+      .join("")} timestamp
     FROM IHTREND
     WHERE samplingmode = interpolated AND
       intervalmilliseconds = 60000 AND
@@ -181,25 +203,27 @@ export const getDayTotalBeforeTime = async (date: Date) => {
   `;
 
   const result = await connection.query(queryString);
-  assertHistorianValuesAll(result);
-  const parsedResults = result.map((r) => parseDatabaseValues(r));
+  assertHistorianValuesAll(result, gauges);
+  const parsedResults = result.map((r) => parseDatabaseValues(r, gauges));
 
   if (parsedResults.length === 0) {
     throw new Error(`No data found for date ${format(date, "yyyy-MM-dd")}`);
   }
 
-  return collectAllGaugeValuesIntoTotals(parsedResults, date);
+  return collectAllGaugeValuesIntoTotals(parsedResults, gauges, date);
 };
 
 export const getDayTotalAfterTime = async (
   date: Date,
   end: Date | null = null
 ) => {
+  const gauges = await getRainGauges();
+
   // If requested time is 11:59 PM, value will be zero
   if (format(date, "HH:mm") === "23:59") {
     return {
       timestamp: date,
-      readings: RainGaugeData.map((gauge) => ({
+      readings: gauges.map((gauge) => ({
         label: gauge.tag,
         value: 0,
         quality: "100",
@@ -209,9 +233,9 @@ export const getDayTotalAfterTime = async (
 
   const queryString = `
     SELECT 
-    ${RainGaugeData.map(
-      (gauge) => `${gauge.tag}.F_CV.VALUE, ${gauge.tag}.F_CV.QUALITY, `
-    ).join("")} timestamp
+    ${gauges
+      .map((gauge) => `${gauge.tag}.F_CV.VALUE, ${gauge.tag}.F_CV.QUALITY, `)
+      .join("")} timestamp
     FROM IHTREND
     WHERE samplingmode = interpolated AND
       intervalmilliseconds = 60000 AND
@@ -224,12 +248,12 @@ export const getDayTotalAfterTime = async (
   `;
 
   const result = await connection.query(queryString);
-  assertHistorianValuesAll(result);
-  const parsedResults = result.map((r) => parseDatabaseValues(r));
+  assertHistorianValuesAll(result, gauges);
+  const parsedResults = result.map((r) => parseDatabaseValues(r, gauges));
 
   if (parsedResults.length === 0) {
     throw new Error(`No data found for date ${format(date, "yyyy-MM-dd")}`);
   }
 
-  return collectAllGaugeValuesIntoTotals(parsedResults, date);
+  return collectAllGaugeValuesIntoTotals(parsedResults, gauges, date);
 };

@@ -1,9 +1,8 @@
 // When we get query results via node-adodb, we need to parse the results into known types for validation
 
-import { RainGaugeData } from "~/utils/constants";
-
 export function assertHistorianValuesAll(
-  input: unknown
+  input: unknown,
+  gauges: RainGaugeInfo[]
 ): asserts input is IHistValues[] {
   // Check if input is an array
   if (!Array.isArray(input)) throw new Error("Input is not an array!");
@@ -16,7 +15,7 @@ export function assertHistorianValuesAll(
       throw new Error("IHistorian values object missing timestamp");
     }
 
-    RainGaugeData.forEach((gauge) => {
+    gauges.forEach((gauge) => {
       const valueKey = `${gauge.tag}.F_CV.Value`;
       const qualityKey = `${gauge.tag}.F_CV.Quality`;
 

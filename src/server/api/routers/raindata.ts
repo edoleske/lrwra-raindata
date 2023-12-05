@@ -24,12 +24,12 @@ import {
   today,
 } from "~/utils/utils";
 import { createTRPCRouter, publicProcedure } from "../trpc";
-import { RainGaugeData } from "~/utils/constants";
 import { handleError, normalizeValues } from "~/server/api/utils";
 import {
   getDayTotalAfterTime,
   getDayTotalBeforeTime,
   getDayTotalHistory,
+  getRainGauges,
   getRawData,
   getTotalBetweenTwoDates,
 } from "../queries";
@@ -54,28 +54,39 @@ export const rainDataRouter = createTRPCRouter({
       handleError(err);
     }
   }),
+  // Gets rain gauges from database
+  rainGauges: publicProcedure.query(async () => {
+    try {
+      const gauges = await getRainGauges();
+      return gauges;
+    } catch (err) {
+      handleError(err);
+    }
+  }),
   // Gets the most recent readings for each gauge
   currentValues: publicProcedure.query(async () => {
-    const queryString = `
-      SELECT TOP 1
-        ${RainGaugeData.map(
-          (gauge) => `${gauge.tag}.F_CV.VALUE, ${gauge.tag}.F_CV.QUALITY, `
-        ).join("")} timestamp
-      FROM IHTREND 
-      WHERE samplingmode = interpolated 
-      ORDER BY TIMESTAMP DESC
-    `;
-
     try {
+      const RainGaugeData = await getRainGauges();
+
+      const queryString = `
+        SELECT TOP 1
+          ${RainGaugeData.map(
+            (gauge) => `${gauge.tag}.F_CV.VALUE, ${gauge.tag}.F_CV.QUALITY, `
+          ).join("")} timestamp
+        FROM IHTREND 
+        WHERE samplingmode = interpolated 
+        ORDER BY TIMESTAMP DESC
+      `;
+
       const result = await connection.query(queryString);
-      assertHistorianValuesAll(result);
+      assertHistorianValuesAll(result, RainGaugeData);
 
       const dbValues = result[0];
       if (dbValues === undefined) {
         throw new Error("No data returned from database!");
       }
 
-      const values = parseDatabaseValues(dbValues);
+      const values = parseDatabaseValues(dbValues, RainGaugeData);
       return { values };
     } catch (err) {
       handleError(err);
@@ -95,37 +106,39 @@ export const rainDataRouter = createTRPCRouter({
       const minDate = format(add(input.date, { days: 1 }), "MM/dd/yyyy");
       const maxDate = format(add(input.date, { days: 2 }), "MM/dd/yyyy");
 
-      const queryString = isToday(input.date)
-        ? `
-        SELECT
-          ${RainGaugeData.map(
-            (gauge) => `${gauge.tag}.F_CV.VALUE, ${gauge.tag}.F_CV.QUALITY, `
-          ).join("")} timestamp
-        FROM IHTREND 
-        WHERE samplingmode = 'currentvalues'
-      `
-        : `
-        SELECT
-          ${RainGaugeData.map(
-            (gauge) => `${gauge.tag}.F_CV.VALUE, ${gauge.tag}.F_CV.QUALITY, `
-          ).join("")} timestamp
-        FROM IHTREND 
-        WHERE samplingmode = 'calculated' AND
-            calculationmode = 'max' AND
-            timestamp >= ${minDate} AND 
-            timestamp < ${maxDate}
-      `;
-
       try {
+        const RainGaugeData = await getRainGauges();
+
+        const queryString = isToday(input.date)
+          ? `
+          SELECT
+            ${RainGaugeData.map(
+              (gauge) => `${gauge.tag}.F_CV.VALUE, ${gauge.tag}.F_CV.QUALITY, `
+            ).join("")} timestamp
+          FROM IHTREND 
+          WHERE samplingmode = 'currentvalues'
+        `
+          : `
+          SELECT
+            ${RainGaugeData.map(
+              (gauge) => `${gauge.tag}.F_CV.VALUE, ${gauge.tag}.F_CV.QUALITY, `
+            ).join("")} timestamp
+          FROM IHTREND 
+          WHERE samplingmode = 'calculated' AND
+              calculationmode = 'max' AND
+              timestamp >= ${minDate} AND 
+              timestamp < ${maxDate}
+        `;
+
         const result = await connection.query(queryString);
-        assertHistorianValuesAll(result);
+        assertHistorianValuesAll(result, RainGaugeData);
 
         const dbValues = result[0];
         if (dbValues === undefined) {
           throw new Error("No data returned from database!");
         }
 
-        const values = parseDatabaseValues(dbValues);
+        const values = parseDatabaseValues(dbValues, RainGaugeData);
         return { values };
       } catch (err) {
         handleError(err);
@@ -136,13 +149,24 @@ export const rainDataRouter = createTRPCRouter({
       z.object({ monthData: z.boolean(), gauge: z.string(), date: z.date() })
     )
     .query(async ({ input }) => {
-      if (
-        !RainGaugeData.find((gauge) => gauge.tag.trim() !== input.gauge.trim())
-      ) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: `Unknown gauge ${input.gauge}`,
-        });
+      const RainGaugeData = await getRainGauges();
+
+      if (input.gauge) {
+        if (
+          !RainGaugeData.find(
+            (gauge) => gauge.tag.trim() !== input.gauge.trim()
+          )
+        ) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: `Unknown gauge ${input.gauge}`,
+          });
+        }
+      } else {
+        const firstTag = RainGaugeData[0]?.tag;
+        if (firstTag) {
+          input.gauge = firstTag;
+        }
       }
 
       if (input.monthData) {
@@ -250,6 +274,8 @@ export const rainDataRouter = createTRPCRouter({
       };
 
       try {
+        const RainGaugeData = await getRainGauges();
+
         const calendarDayRange = Math.abs(
           differenceInCalendarDays(input.startDate, input.endDate)
         );
@@ -308,13 +334,6 @@ export const rainDataRouter = createTRPCRouter({
       })
     )
     .query(async ({ input }) => {
-      if (!RainGaugeData.map((rg) => rg.tag).includes(input.gauge)) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: `${input.gauge} is not a recognized rain gauge.`,
-        });
-      }
-
       const queryString = `
         SELECT
           timestamp, ${input.gauge}.F_CV.VALUE, ${input.gauge}.F_CV.QUALITY,
@@ -326,6 +345,15 @@ export const rainDataRouter = createTRPCRouter({
         ORDER BY TIMESTAMP
       `;
       try {
+        const RainGaugeData = await getRainGauges();
+
+        if (!RainGaugeData.map((rg) => rg.tag).includes(input.gauge)) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: `${input.gauge} is not a recognized rain gauge.`,
+          });
+        }
+
         const result = await connection.query(queryString);
         assertHistorianValuesSingle(result, input.gauge);
 

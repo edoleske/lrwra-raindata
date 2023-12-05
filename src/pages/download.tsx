@@ -4,7 +4,6 @@ import { useContext, useState } from "react";
 import { BsCalendarEvent, BsCalendarWeek } from "react-icons/bs";
 import { GlobalAlertContext } from "~/components/globalAlerts/GlobalAlertProvider";
 import { api } from "~/utils/api";
-import { RainGaugeData } from "~/utils/constants";
 import { getRainGaugeLabelShort } from "~/utils/utils";
 
 const DownloadPage = () => {
@@ -16,6 +15,7 @@ const DownloadPage = () => {
   const [endDate, setEndDate] = useState(format(new Date(), "yyyy-MM-dd"));
   const [frequency, setFrequency] = useState(1);
 
+  const rainGauges = api.raindata.rainGauges.useQuery();
   const fileMutation = api.download.downloadCSV.useMutation();
   const dailyFileMutation = api.download.downloadDailyCSV.useMutation();
 
@@ -41,7 +41,11 @@ const DownloadPage = () => {
           );
 
     if (result) {
-      const gaugeString = getRainGaugeLabelShort(selectedGauge, true);
+      const gaugeString = getRainGaugeLabelShort(
+        selectedGauge,
+        rainGauges.data,
+        true
+      );
       let dateString = startDate.replace("-", "");
       if (dateRange) {
         dateString += "-" + endDate.replace("-", "");
@@ -165,7 +169,7 @@ const DownloadPage = () => {
           onChange={(e) => setSelectedGauge(e.target.value)}
         >
           <option value="all">All</option>
-          {RainGaugeData.map((gauge, index) => (
+          {rainGauges.data?.map((gauge, index) => (
             <option key={index} value={gauge.tag}>
               {gauge.label}
             </option>
@@ -194,7 +198,7 @@ const DownloadPage = () => {
     </div>
   );
 
-  if (fileMutation.isLoading) {
+  if (fileMutation.isLoading || rainGauges.isLoading) {
     return (
       <div className="w-full p-8 text-center">
         <h1 className="mb-8 text-4xl font-bold">Download Data</h1>

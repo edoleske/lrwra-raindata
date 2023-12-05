@@ -38,12 +38,13 @@ const CustomTotalTable = () => {
     startDate: queryStartDate,
     endDate: queryEndDate,
   });
+  const rainGauges = api.raindata.rainGauges.useQuery();
 
   const downloadQueryResult = () => {
-    if (historyValues.data) {
+    if (historyValues.data && rainGauges.data) {
       let csvfile = '"Rain Gauge","Value (Inches)"\r\n';
       historyValues.data.readings.forEach((reading) => {
-        csvfile += `"${getRainGaugeLabel(reading.label)}","${
+        csvfile += `"${getRainGaugeLabel(reading.label, rainGauges.data)}","${
           reading.value
         }"\r\n`;
       });
@@ -65,7 +66,11 @@ const CustomTotalTable = () => {
       return <QueryErrorAlert message={historyValues.error.message} />;
     }
 
-    if (!historyValues.data) {
+    if (rainGauges.isError) {
+      return <QueryErrorAlert message={rainGauges.error.message} />;
+    }
+
+    if (!historyValues.data || !rainGauges.data) {
       return (
         <div className="spinner spinner-primary spinner-xl m-auto mt-8"></div>
       );
@@ -88,9 +93,9 @@ const CustomTotalTable = () => {
           </tr>
         </thead>
         <tbody>
-          {historyValues.data.readings.map((reading) => (
+          {historyValues.data?.readings.map((reading) => (
             <tr key={reading.label}>
-              <td>{getRainGaugeLabel(reading.label)}</td>
+              <td>{getRainGaugeLabel(reading.label, rainGauges.data)}</td>
               <td>
                 {reading.value === 0 ? 0 : reading.value?.toFixed(2)}&quot;
               </td>
