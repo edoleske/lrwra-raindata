@@ -82,7 +82,10 @@ const DayTotalTable = () => {
             <tr key={reading.label}>
               <td>{getRainGaugeLabel(reading.label, rainGauges.data)}</td>
               <td>
-                {reading.value === 0 ? 0 : reading.value.toFixed(2)}&quot;
+                {reading.value === 0 || isNaN(Number(reading.value))
+                  ? Number(0).toFixed(2)
+                  : Number(reading.value).toFixed(2)}
+                &quot;
               </td>
             </tr>
           ))}
