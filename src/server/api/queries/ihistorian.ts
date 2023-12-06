@@ -168,7 +168,7 @@ export const getDayTotalHistoryAll = async (start: Date, end: Date) => {
   return result.map((r) => parseDatabaseValues(r, gauges));
 };
 
-export const getTotalBetweenTwoDates = async (start: Date, end: Date) => {
+export const getTotalBetweenTwoDatesOld = async (start: Date, end: Date) => {
   const gauges = await getRainGauges();
 
   let queryString = `

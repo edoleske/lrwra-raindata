@@ -42,6 +42,11 @@ interface TimestampedReading {
   quality: string;
 }
 
+interface SingleGaugeReading {
+  label: string;
+  reading: TimestampedReading;
+}
+
 interface SingleGaugeHistory {
   label: string;
   readings: TimestampedReading[];
