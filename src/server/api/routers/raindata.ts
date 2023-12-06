@@ -13,26 +13,19 @@ import {
 } from "date-fns";
 import { z } from "zod";
 import { connection } from "~/server/db";
-import {
-  assertHistorianValuesSingle,
-  assertHistorianValuesAll,
-} from "~/server/typeValidation";
-import {
-  parseDatabaseHistory,
-  parseDatabaseValues,
-  pureDate,
-  today,
-} from "~/utils/utils";
+import { assertHistorianValuesSingle } from "~/server/typeValidation";
+import { parseDatabaseHistory, pureDate, today } from "~/utils/utils";
 import { createTRPCRouter, publicProcedure } from "../trpc";
 import { handleError, normalizeValues } from "~/server/api/utils";
 import {
+  getCurrentValuesAll,
   getDayTotalAfterTime,
   getDayTotalBeforeTime,
   getDayTotalHistory,
-  getRainGauges,
   getRawData,
   getTotalBetweenTwoDates,
-} from "../queries";
+} from "../queries/ihistorian";
+import { getDateValues, getRainGauges } from "../queries/raindatabase";
 
 export const rainDataRouter = createTRPCRouter({
   // This endpoint is for testing queries
@@ -43,7 +36,7 @@ export const rainDataRouter = createTRPCRouter({
         ADAMS.AF2295LQT.F_CV.VALUE, ADAMS.AF2295LQT.F_CV.QUALITY,
         ADAMS.AF2295LQY.F_CV.VALUE, ADAMS.AF2295LQY.F_CV.QUALITY
       FROM IHTREND
-      WHERE samplingmode = rawbytime AND timestamp >= '05/31/2023 23:59:00' AND timestamp <= '05/31/2023 23:59:00'
+      WHERE samplingmode = CurrentValue
       ORDER BY TIMESTAMP
     `;
     try {
@@ -66,28 +59,9 @@ export const rainDataRouter = createTRPCRouter({
   // Gets the most recent readings for each gauge
   currentValues: publicProcedure.query(async () => {
     try {
-      const RainGaugeData = await getRainGauges();
-
-      const queryString = `
-        SELECT TOP 1
-          ${RainGaugeData.map(
-            (gauge) => `${gauge.tag}.F_CV.VALUE, ${gauge.tag}.F_CV.QUALITY, `
-          ).join("")} timestamp
-        FROM IHTREND 
-        WHERE samplingmode = interpolated 
-        ORDER BY TIMESTAMP DESC
-      `;
-
-      const result = await connection.query(queryString);
-      assertHistorianValuesAll(result, RainGaugeData);
-
-      const dbValues = result[0];
-      if (dbValues === undefined) {
-        throw new Error("No data returned from database!");
-      }
-
-      const values = parseDatabaseValues(dbValues, RainGaugeData);
-      return { values };
+      const gauges = await getRainGauges();
+      const currentValues = await getCurrentValuesAll(gauges);
+      return currentValues;
     } catch (err) {
       handleError(err);
     }
@@ -103,43 +77,15 @@ export const rainDataRouter = createTRPCRouter({
         });
       }
 
-      const minDate = format(add(input.date, { days: 1 }), "MM/dd/yyyy");
-      const maxDate = format(add(input.date, { days: 2 }), "MM/dd/yyyy");
-
       try {
-        const RainGaugeData = await getRainGauges();
-
-        const queryString = isToday(input.date)
-          ? `
-          SELECT
-            ${RainGaugeData.map(
-              (gauge) => `${gauge.tag}.F_CV.VALUE, ${gauge.tag}.F_CV.QUALITY, `
-            ).join("")} timestamp
-          FROM IHTREND 
-          WHERE samplingmode = 'currentvalues'
-        `
-          : `
-          SELECT
-            ${RainGaugeData.map(
-              (gauge) => `${gauge.tag}.F_CV.VALUE, ${gauge.tag}.F_CV.QUALITY, `
-            ).join("")} timestamp
-          FROM IHTREND 
-          WHERE samplingmode = 'calculated' AND
-              calculationmode = 'max' AND
-              timestamp >= ${minDate} AND 
-              timestamp < ${maxDate}
-        `;
-
-        const result = await connection.query(queryString);
-        assertHistorianValuesAll(result, RainGaugeData);
-
-        const dbValues = result[0];
-        if (dbValues === undefined) {
-          throw new Error("No data returned from database!");
+        if (isToday(input.date)) {
+          const gauges = await getRainGauges();
+          const values = await getCurrentValuesAll(gauges);
+          return values;
+        } else {
+          const values = await getDateValues(input.date);
+          return values;
         }
-
-        const values = parseDatabaseValues(dbValues, RainGaugeData);
-        return { values };
       } catch (err) {
         handleError(err);
       }

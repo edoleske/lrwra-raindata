@@ -31,7 +31,7 @@ const DayTotalTable = () => {
   const downloadQueryResult = () => {
     if (historyValues.data && rainGauges.data) {
       let csvfile = '"Rain Gauge","Value (Inches)"\r\n';
-      historyValues.data.values.readings.forEach((reading) => {
+      historyValues.data.readings.forEach((reading) => {
         csvfile += `"${getRainGaugeLabel(reading.label, rainGauges.data)}","${
           reading.value
         }"\r\n`;
@@ -78,7 +78,7 @@ const DayTotalTable = () => {
           </tr>
         </thead>
         <tbody>
-          {historyValues.data.values.readings.map((reading) => (
+          {historyValues.data.readings.map((reading) => (
             <tr key={reading.label}>
               <td>{getRainGaugeLabel(reading.label, rainGauges.data)}</td>
               <td>

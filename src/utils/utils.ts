@@ -101,3 +101,27 @@ export const parseDatabaseHistory = (
     }),
   };
 };
+
+export const parseDatabaseCurrentValue = (
+  dbHistory: IHistValues[],
+  gauge: string
+): SingleGaugeReading => {
+  const valueKey = `${gauge}.F_CV.Value`;
+  const qualityKey = `${gauge}.F_CV.Quality`;
+
+  const reading = dbHistory[0];
+  if (!reading) {
+    throw Error(
+      `parseDatabaseCurrentValue called with empty dbHistory parameter for gauge ${gauge}`
+    );
+  }
+
+  return {
+    label: gauge,
+    reading: {
+      timestamp: new Date(reading.timestamp),
+      value: reading[valueKey] as number,
+      quality: reading[qualityKey] as string,
+    },
+  };
+};

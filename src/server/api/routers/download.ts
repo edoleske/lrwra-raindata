@@ -12,11 +12,11 @@ import {
 import {
   getDayTotalHistory,
   getDayTotalHistoryAll,
-  getRainGauges,
   getRawData,
   getRawDataAll,
-} from "../queries";
+} from "../queries/ihistorian";
 import { handleError } from "../utils";
+import { getRainGauges } from "../queries/raindatabase";
 
 const validateDates = (start: Date, end: Date) => {
   if (

@@ -36,8 +36,7 @@ const TestDataPage = () => {
           <div className="m-auto w-fit">
             <h2 className="text-xl font-bold">Current Values</h2>
             <p className="mt-4 mb-6">
-              Last updated{" "}
-              {format(values.data.values.timestamp, "MM/dd/yyyy HH:mm")}
+              Last updated {format(values.data.timestamp, "MM/dd/yyyy HH:mm")}
             </p>
             <table className="my-4 table">
               <thead>
@@ -47,7 +46,7 @@ const TestDataPage = () => {
                 </tr>
               </thead>
               <tbody>
-                {values.data.values.readings.map((reading) => (
+                {values.data.readings.map((reading) => (
                   <tr key={reading.label}>
                     <td>{reading.label}</td>
                     <td>{reading.value}</td>
@@ -74,7 +73,7 @@ const TestDataPage = () => {
                 </tr>
               </thead>
               <tbody>
-                {historyValues.data.values.readings.map((reading) => (
+                {historyValues.data.readings.map((reading) => (
                   <tr key={reading.label}>
                     <td>{reading.label}</td>
                     <td>{reading.value}</td>

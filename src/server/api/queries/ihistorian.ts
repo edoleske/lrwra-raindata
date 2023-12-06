@@ -1,28 +1,57 @@
 import { add, addDays, compareAsc, format, isBefore } from "date-fns";
-import { connection } from "../db";
+import { connection } from "../../db";
 import {
   assertHistorianValuesAll,
   assertHistorianValuesSingle,
-} from "../typeValidation";
+} from "../../typeValidation";
 import {
   iHistFormatDT,
+  parseDatabaseCurrentValue,
   parseDatabaseHistory,
   parseDatabaseValues,
 } from "~/utils/utils";
-import { collectAllGaugeValuesIntoTotals } from "./utils";
-import { rainDataDB } from "../knex";
+import { collectAllGaugeValuesIntoTotals } from "../utils";
+import { getRainGauges } from "./raindatabase";
 
-export const getRainGauges = async () => {
-  const result: RainGaugeInfo[] = await rainDataDB("gauges").select(
-    "tag",
-    "label",
-    "label_short",
-    "label_long",
-    "address",
-    "coordinates"
-  );
-  return result;
+// Gets current rain gauge values from iHistorian (SCADA System)
+export const getCurrentValues = async (gauge: string) => {
+  const queryString = `
+    SELECT
+      timestamp, ${gauge}.F_CV.VALUE, ${gauge}.F_CV.QUALITY
+    FROM IHTREND
+    WHERE samplingmode = CurrentValue
+  `;
+
+  const result = await connection.execute(queryString);
+  assertHistorianValuesSingle(result, gauge);
+  return parseDatabaseCurrentValue(result, gauge);
 };
+
+export const getCurrentValuesAll = async (gauges: RainGaugeInfo[]) => {
+  const queryString = `
+    SELECT TOP 1
+    ${gauges
+      .map((gauge) => `${gauge.tag}.F_CV.VALUE, ${gauge.tag}.F_CV.QUALITY, `)
+      .join("")} timestamp
+    FROM IHTREND
+    WHERE samplingmode = CurrentValue
+  `;
+
+  const result = await connection.query(queryString);
+  assertHistorianValuesAll(result, gauges);
+
+  const firstValue = result[0];
+  if (firstValue === undefined) {
+    throw Error(`getCurrentValuesAll return no data!`);
+  }
+
+  return parseDatabaseValues(firstValue, gauges);
+};
+
+/*
+ * iHistorian Queries Below
+ * All Will Be Deprecated, Only getCurrentValues and getCurrentValuesAll will be kept
+ */
 
 export const getRawData = async (
   gauge: string,
