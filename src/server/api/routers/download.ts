@@ -4,13 +4,10 @@ import { z } from "zod";
 
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 import { getRainGaugeLabel, pureDate } from "~/utils/utils";
-import {
-  getDayTotalHistory,
-  getDayTotalHistoryAll,
-} from "../queries/ihistorian";
 import { handleError } from "../utils";
 import {
   getDailyTotalHistory,
+  getDailyTotalHistoryAll,
   getRainGauges,
   getRawData,
   getRawDataAll,
@@ -147,33 +144,43 @@ export const downloadRouter = createTRPCRouter({
         const start = pureDate(input.startDate);
         const end = addDays(pureDate(input.endDate), 1);
 
-        await getDailyTotalHistory(start, end);
-
         validateDates(start, end);
         let csvfile = "";
         if (input.gauge === "all") {
           // Get all gauge history
-          const history = await getDayTotalHistoryAll(start, end);
+          const history = await getDailyTotalHistoryAll(start, end);
+
+          // Get gauges that we have data for in history
+          const lastRow = history.at(-1);
+          if (!lastRow) throw Error(`No data found for date range.`);
+          const lastRowLabels = lastRow.readings.map(
+            (reading) => reading.label
+          );
+          const gaugesIncluded = RainGaugeData.filter((rgd) =>
+            lastRowLabels.includes(rgd.tag)
+          );
 
           // Generate CSV file as string
-          csvfile = `"Timestamp",${RainGaugeData.map(
-            (rg) => `"${rg.label} Value (in)","${rg.label} Status %"`
-          ).join(",")}\r\n`;
+          csvfile = `"Timestamp",${gaugesIncluded
+            .map((rg) => `"${rg.label} Value (in)","${rg.label} Status %"`)
+            .join(",")}\r\n`;
           history.forEach((row) => {
             csvfile += `"${format(
               row.timestamp,
-              "yyyy-MM-dd HH:mm:ss"
-            )}",${RainGaugeData.map((rg) => {
-              const reading = row.readings.find((r) => r.label === rg.tag);
-              if (!reading) {
-                return '"",""';
-              }
-              return `"${reading.value}","${reading.quality}"`;
-            }).join(",")}\r\n`;
+              "yyyy-MM-dd"
+            )}",${gaugesIncluded
+              .map((rg) => {
+                const reading = row.readings.find((r) => r.label === rg.tag);
+                if (!reading) {
+                  return '"",""';
+                }
+                return `"${reading.value}","${reading.quality}"`;
+              })
+              .join(",")}\r\n`;
           });
         } else {
           // Get single gauge history
-          const history = await getDayTotalHistory(input.gauge, start, end);
+          const history = await getDailyTotalHistory(input.gauge, start, end);
 
           // Generate CSV file as string
           csvfile = '"Rain Gauge","Timestamp","Value","Quality"\r\n';
@@ -181,7 +188,7 @@ export const downloadRouter = createTRPCRouter({
             csvfile += `"${getRainGaugeLabel(
               history.label,
               RainGaugeData
-            )}","${format(reading.timestamp, "yyyy-MM-dd HH:mm:ss")}","${
+            )}","${format(reading.timestamp, "yyyy-MM-dd")}","${
               reading.value
             }","${reading.quality}"\r\n`;
           });

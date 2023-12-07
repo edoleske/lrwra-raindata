@@ -24,6 +24,8 @@ import {
 import {
   getTotalBetweenTwoDates,
   getRainGauges,
+  getDateTotalAll,
+  getMonthTotalAll,
 } from "../queries/raindatabase";
 
 export const rainDataRouter = createTRPCRouter({
@@ -82,10 +84,7 @@ export const rainDataRouter = createTRPCRouter({
           const values = await getCurrentValuesAll(gauges);
           return values;
         } else {
-          const values = await getTotalBetweenTwoDates(
-            input.date,
-            addDays(input.date, 1)
-          );
+          const values = await getDateTotalAll(input.date);
           return values;
         }
       } catch (err) {
@@ -178,14 +177,8 @@ export const rainDataRouter = createTRPCRouter({
         });
       }
 
-      const startOfCurrent = startOfMonth(input.month);
-      const startOfNext = addMonths(startOfCurrent, 1);
-
       try {
-        const totals = await getTotalBetweenTwoDates(
-          startOfCurrent,
-          startOfNext
-        );
+        const totals = await getMonthTotalAll(input.month);
         return totals;
       } catch (err) {
         handleError(err);
