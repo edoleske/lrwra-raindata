@@ -75,3 +75,10 @@ interface BarGraphQueryInput {
   monthData: boolean;
   date: Date;
 }
+
+interface RawReading {
+  tag: string;
+  timestamp: Date;
+  value: number;
+  quality: string;
+}

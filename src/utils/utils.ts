@@ -19,6 +19,12 @@ export const pureDate = (d: Date) => {
   return d;
 };
 
+// Utility function to add timezone offset to date (Knex adjusts it automatically)
+export const adjustDateTimezone = (d: Date) => {
+  const userTimezoneOffset = d.getTimezoneOffset() * 60000;
+  return new Date(d.getTime() + userTimezoneOffset);
+};
+
 // Utility function to convert gauge tag to label
 export const getRainGaugeLabel = (
   tag: string,

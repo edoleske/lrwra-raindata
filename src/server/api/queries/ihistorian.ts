@@ -9,6 +9,7 @@ import {
   parseDatabaseCurrentValue,
   parseDatabaseHistory,
   parseDatabaseValues,
+  today,
 } from "~/utils/utils";
 import { collectAllGaugeValuesIntoTotals } from "../utils";
 import { getRainGauges } from "./raindatabase";
@@ -22,7 +23,7 @@ export const getCurrentValues = async (gauge: string) => {
     WHERE samplingmode = CurrentValue
   `;
 
-  const result = await connection.execute(queryString);
+  const result = await connection.query(queryString);
   assertHistorianValuesSingle(result, gauge);
   return parseDatabaseCurrentValue(result, gauge);
 };
@@ -48,11 +49,7 @@ export const getCurrentValuesAll = async (gauges: RainGaugeInfo[]) => {
   return parseDatabaseValues(firstValue, gauges);
 };
 
-/*
- * iHistorian Queries Below
- * All Will Be Deprecated, Only getCurrentValues and getCurrentValuesAll will be kept
- */
-
+// These functions get raw data from iHistorian between two dates
 export const getRawData = async (
   gauge: string,
   start: Date,
@@ -85,10 +82,13 @@ export const getRawData = async (
   return result;
 };
 
-export const getRawDataAll = async (start: Date, end: Date, frequency = 1) => {
+export const getRawDataAll = async (
+  gauges: RainGaugeInfo[],
+  start: Date,
+  end: Date,
+  frequency = 1
+) => {
   let result: IHistValues[] = [];
-
-  const gauges = await getRainGauges();
 
   for (let d = start; d.getTime() < end.getTime(); d = add(d, { days: 2 })) {
     // If we're at the last iteration, filter the timestamp to the input end date instead of adding two days
@@ -117,6 +117,22 @@ export const getRawDataAll = async (start: Date, end: Date, frequency = 1) => {
 
   return result;
 };
+
+// Gets gauge history for the current day from iHistorian (SCADA system)
+export const getTodayValues = async (gauge: string) => {
+  const result = await getRawData(gauge, today(), addDays(today(), 1));
+  return parseDatabaseHistory(result, gauge);
+};
+
+export const getTodayValuesAll = async (gauges: RainGaugeInfo[]) => {
+  const result = await getRawDataAll(gauges, today(), addDays(today(), 1));
+  return result.map((r) => parseDatabaseValues(r, gauges));
+};
+
+/*
+ * iHistorian Queries Below
+ * All Will Be Deprecated, Only getCurrentValues and getCurrentValuesAll will be kept
+ */
 
 export const getDayTotalHistory = async (
   gauge: string,

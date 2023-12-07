@@ -35,7 +35,6 @@ const DownloadPage = () => {
               gauge: selectedGauge,
               startDate: parse(startDate, "yyyy-MM-dd", new Date()),
               endDate: parse(endDate, "yyyy-MM-dd", new Date()),
-              frequency: frequency,
             },
             { onError: (error) => addAlert(error.message, "error") }
           );
@@ -187,11 +186,11 @@ const DownloadPage = () => {
           onChange={(e) => setFrequency(+e.currentTarget.value)}
         >
           <option value={1}>Every minute</option>
-          <option value={5}>Every 5 minutes</option>
+          {/* <option value={5}>Every 5 minutes</option>
           <option value={10}>Every 10 minutes</option>
           <option value={15}>Every 15 minutes</option>
           <option value={30}>Every 30 minutes</option>
-          <option value={60}>Every hour</option>
+          <option value={60}>Every hour</option> */}
           <option value={86400}>Daily</option>
         </select>
       </div>
