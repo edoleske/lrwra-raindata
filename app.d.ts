@@ -82,3 +82,9 @@ interface RawReading {
   value: number;
   quality: string;
 }
+
+interface RawDailyTotal {
+  tag: string;
+  value: number;
+  date: Date;
+}

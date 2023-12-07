@@ -16,16 +16,13 @@ import { assertHistorianValuesSingle } from "~/server/typeValidation";
 import { parseDatabaseHistory, pureDate, today } from "~/utils/utils";
 import { createTRPCRouter, publicProcedure } from "../trpc";
 import { handleError, normalizeValues } from "~/server/api/utils";
-import {
-  getCurrentValuesAll,
-  getDayTotalHistory,
-  getRawData,
-} from "../queries/ihistorian";
+import { getCurrentValuesAll, getRawData } from "../queries/ihistorian";
 import {
   getTotalBetweenTwoDates,
   getRainGauges,
   getDateTotalAll,
   getMonthTotalAll,
+  getDailyTotalHistory,
 } from "../queries/raindatabase";
 
 export const rainDataRouter = createTRPCRouter({
@@ -128,7 +125,7 @@ export const rainDataRouter = createTRPCRouter({
         const startOfNext = addMonths(startOfCurrent, 1);
 
         try {
-          const history = await getDayTotalHistory(
+          const history = await getDailyTotalHistory(
             input.gauge,
             startOfCurrent,
             startOfNext
