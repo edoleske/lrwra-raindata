@@ -41,6 +41,11 @@ const drawGraph = (
     Math.max(...data.map((d) => d.value)),
   ];
 
+  // If all zeroes, then up the max to one for display purposes
+  if (valueExtent[1] === 0) {
+    valueExtent[1] = 1;
+  }
+
   const yScale = d3
     .scaleLinear()
     .domain(valueExtent)
@@ -168,7 +173,7 @@ const LineChart = ({ data, dimensions }: LineChartProps) => {
   const svgRef = useRef<SVGSVGElement>(null);
 
   useEffect(() => {
-    if (data) {
+    if (data && data.length > 1) {
       drawGraph(svgRef, data, dimensions);
     }
 
