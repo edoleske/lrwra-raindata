@@ -4,6 +4,7 @@ import {
   compareAsc,
   differenceInDays,
   format,
+  isWithinInterval,
   max,
   min,
 } from "date-fns";
@@ -75,7 +76,6 @@ export const collectTimeInterval = (
   history: SingleGaugeHistory,
   minutes = 10
 ): SingleGaugeHistory => {
-  const result: TimestampedReading[] = [];
   const readingCopy = history.readings.slice();
   const minDate = min(readingCopy.map((reading) => reading.timestamp));
   const maxDate = max(readingCopy.map((reading) => reading.timestamp));
@@ -87,23 +87,29 @@ export const collectTimeInterval = (
     d = addMinutes(d, minutes);
   }
 
-  timeSteps.forEach((timeStep) => {
-    result.push({
-      timestamp: timeStep,
-      quality: "100",
-      value: readingCopy
-        .filter(
-          (reading) =>
-            reading.timestamp >= timeStep &&
-            reading.timestamp < addMinutes(timeStep, 10)
-        )
-        .reduce((a, b) => a + b.value, 0),
-    });
-  });
+  const results: TimestampedReading[] = timeSteps.map((timeStep) => ({
+    timestamp: timeStep,
+    quality: "100",
+    value: 0,
+  }));
+
+  for (const reading of readingCopy) {
+    for (const result of results) {
+      if (
+        isWithinInterval(reading.timestamp, {
+          start: result.timestamp,
+          end: addMinutes(result.timestamp, minutes - 1),
+        })
+      ) {
+        result.value += reading.value;
+        break;
+      }
+    }
+  }
 
   return {
     label: history.label,
-    readings: result,
+    readings: results,
   };
 };
 

@@ -63,8 +63,7 @@ export const chartRouter = createTRPCRouter({
           } else if (deltaDays <= 7) {
             return collectTimeInterval(result, 60);
           }
-          const x = collectTimeInterval(result, 120);
-          return x;
+          return collectTimeInterval(result, 120);
         }
 
         // Otherwise, we want to get daily totals
