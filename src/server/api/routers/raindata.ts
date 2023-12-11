@@ -7,7 +7,6 @@ import {
   startOfMonth,
 } from "date-fns";
 import { z } from "zod";
-// import { connection } from "~/server/db";
 import { today } from "~/utils/utils";
 import { createTRPCRouter, publicProcedure } from "../trpc";
 import { handleError } from "~/server/api/utils";
@@ -20,26 +19,6 @@ import {
 } from "~/server/api/queries/raindatabase";
 
 export const rainDataRouter = createTRPCRouter({
-  // This endpoint is for testing queries
-  // testIHist: publicProcedure.query(async () => {
-  //   const sqlString = `
-  //     SELECT
-  //       timestamp,
-  //       ADAMS.AF2295LQT.F_CV.VALUE, ADAMS.AF2295LQT.F_CV.QUALITY,
-  //       ADAMS.AF2295LQY.F_CV.VALUE, ADAMS.AF2295LQY.F_CV.QUALITY
-  //     FROM IHTREND
-  //     WHERE samplingmode = CurrentValue
-  //     ORDER BY TIMESTAMP
-  //   `;
-  //   try {
-  //     const adoresult = await connection.query(sqlString);
-  //     console.log(JSON.stringify(adoresult, null, 2));
-  //     return { result: adoresult };
-  //   } catch (err) {
-  //     handleError(err);
-  //   }
-  // }),
-  // Gets rain gauges from database
   rainGauges: publicProcedure.query(async () => {
     try {
       const gauges = await getRainGauges();

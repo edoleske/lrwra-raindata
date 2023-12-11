@@ -64,7 +64,7 @@ export const normalizeValues = (readings: TimestampedReading[]) =>
     .filter((reading) => String(reading.quality) === "100")
     .map((reading, index, array) => {
       const lastValue = array[index - 1]?.value;
-      const newValue = lastValue ? reading.value - lastValue : reading.value;
+      const newValue = lastValue ? reading.value - lastValue : 0;
       return {
         ...reading,
         value: newValue < 0 ? 0 : newValue,
