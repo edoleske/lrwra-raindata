@@ -17,7 +17,7 @@ const BarChartPage = () => {
     gauge: "",
   });
 
-  const dataQuery = api.raindata.barHistory.useQuery(queryInput);
+  const dataQuery = api.chart.barHistory.useQuery(queryInput);
 
   const getChartDimensions = () => ({
     width: Math.max(300, (divRef.current?.clientWidth ?? 0) - 64),

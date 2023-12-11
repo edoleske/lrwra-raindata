@@ -16,7 +16,7 @@ const LineGraphPage = () => {
     endDate: new Date(),
   });
 
-  const historyQuery = api.raindata.lineHistory.useQuery(queryInput);
+  const historyQuery = api.chart.lineHistory.useQuery(queryInput);
 
   const getChartDimensions = () => ({
     width: Math.max(300, (divRef.current?.clientWidth ?? 0) - 64),
