@@ -15,15 +15,21 @@ import { connection } from "~/server/db";
 import { assertHistorianValuesSingle } from "~/server/typeValidation";
 import { parseDatabaseHistory, pureDate, today } from "~/utils/utils";
 import { createTRPCRouter, publicProcedure } from "../trpc";
-import { handleError, normalizeValues } from "~/server/api/utils";
-import { getCurrentValuesAll, getRawData } from "../queries/ihistorian";
+import {
+  collectTimeInterval,
+  handleError,
+  normalizeValues,
+  validateDates,
+} from "~/server/api/utils";
+import { getCurrentValuesAll } from "~/server/api/queries/ihistorian";
 import {
   getTotalBetweenTwoDates,
+  getRawData,
   getRainGauges,
   getDateTotalAll,
   getMonthTotalAll,
   getDailyTotalHistory,
-} from "../queries/raindatabase";
+} from "~/server/api/queries/raindatabase";
 
 export const rainDataRouter = createTRPCRouter({
   // This endpoint is for testing queries
@@ -216,26 +222,15 @@ export const rainDataRouter = createTRPCRouter({
         handleError(err);
       }
     }),
-  interpolatedSamples: publicProcedure
+  lineHistory: publicProcedure
     .input(
       z.object({
         gauge: z.string(),
         startDate: z.date(),
         endDate: z.date(),
-        samples: z.number().int().positive(),
       })
     )
     .query(async ({ input }) => {
-      const queryString = `
-        SELECT
-          timestamp, ${input.gauge}.F_CV.VALUE, ${input.gauge}.F_CV.QUALITY,
-        FROM IHTREND
-        WHERE samplingmode = interpolated AND 
-          numberofsamples = ${Math.min(input.samples, 1000)} AND 
-          timestamp >= '${format(input.startDate, "MM/dd/yyyy")}' AND 
-          timestamp <= '${format(input.endDate, "MM/dd/yyyy")}'
-        ORDER BY TIMESTAMP
-      `;
       try {
         const RainGaugeData = await getRainGauges();
 
@@ -246,13 +241,39 @@ export const rainDataRouter = createTRPCRouter({
           });
         }
 
-        const result = await connection.query(queryString);
-        assertHistorianValuesSingle(result, input.gauge);
+        validateDates(input.startDate, input.endDate, 365);
+        const deltaDays = Math.abs(
+          differenceInDays(input.startDate, input.endDate)
+        );
 
-        const history = parseDatabaseHistory(result, input.gauge);
-        history.readings = normalizeValues(history.readings);
+        // Return raw readings for time ranges within two weeks
+        if (deltaDays < 15) {
+          const result = await getRawData(
+            input.gauge,
+            input.startDate,
+            input.endDate
+          );
+          result.readings = normalizeValues(result.readings);
 
-        return history;
+          // Collect into different time intervals depending on time range
+          if (deltaDays <= 1) {
+            return collectTimeInterval(result);
+          } else if (deltaDays <= 3) {
+            return collectTimeInterval(result, 30);
+          } else if (deltaDays <= 7) {
+            return collectTimeInterval(result, 60);
+          }
+          const x = collectTimeInterval(result, 120);
+          return x;
+        }
+
+        // Otherwise, we want to get daily totals
+        const result = await getDailyTotalHistory(
+          input.gauge,
+          input.startDate,
+          input.endDate
+        );
+        return result;
       } catch (err) {
         handleError(err);
       }

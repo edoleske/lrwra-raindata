@@ -65,7 +65,6 @@ interface ChartDimensions {
 
 interface LineGraphQueryInput {
   gauge: string;
-  samples: number;
   startDate: Date;
   endDate: Date;
 }

@@ -1,4 +1,12 @@
 import { TRPCError } from "@trpc/server";
+import {
+  addMinutes,
+  compareAsc,
+  differenceInDays,
+  format,
+  max,
+  min,
+} from "date-fns";
 
 export const handleError = (error: unknown) => {
   // String(err) works for all errors except for database errors
@@ -13,20 +21,93 @@ export const handleError = (error: unknown) => {
   });
 };
 
-// This function transforms the values in the raw data to be more normalized
+// Validates dates (throws TRPCError with BAD_REQUEST) to follow the following rules:
+// - Date range cannot be in the future
+// - End date must be after start date
+// - Date range must not exceed given maximum
+export const validateDates = (start: Date, end: Date, maxDays = 31) => {
+  if (
+    compareAsc(new Date(), start) !== 1 &&
+    compareAsc(new Date(), end) !== 1
+  ) {
+    throw new TRPCError({
+      code: "BAD_REQUEST",
+      message: `No data available for the future.`,
+    });
+  }
+
+  if (compareAsc(end, start) !== 1) {
+    throw new TRPCError({
+      code: "BAD_REQUEST",
+      message: `End date ${format(
+        end,
+        "yyyy-mm-DD"
+      )} is before start date ${format(start, "yyyy-mm-DD")}`,
+    });
+  }
+
+  if (Math.abs(differenceInDays(start, end)) > maxDays) {
+    throw new TRPCError({
+      code: "BAD_REQUEST",
+      message: `Cannot retrieve more than ${maxDays} days of data at once.`,
+    });
+  }
+};
+
+// Transforms the values in the raw data to be more normalized
 // The rain gauges aggregate the rain values per day and reset at midnight
 // This transforms the values so the measure is the rain that occurred since the last interval
+// It filters out non-100 quality rows, because the value for those rows is usually 0, because the gauge is offline
 export const normalizeValues = (readings: TimestampedReading[]) =>
-  readings.map((reading, index, array) => {
-    const lastValue = array[index - 1]?.value;
-    const newValue = lastValue ? reading.value - lastValue : reading.value;
-    return {
-      ...reading,
-      value: newValue < 0 ? 0 : newValue,
-    };
+  readings
+    .filter((reading) => String(reading.quality) === "100")
+    .map((reading, index, array) => {
+      const lastValue = array[index - 1]?.value;
+      const newValue = lastValue ? reading.value - lastValue : reading.value;
+      return {
+        ...reading,
+        value: newValue < 0 ? 0 : newValue,
+      };
+    });
+
+// Collects SingleGaugeHistory into larger time buckets for displaying in graph
+export const collectTimeInterval = (
+  history: SingleGaugeHistory,
+  minutes = 10
+): SingleGaugeHistory => {
+  const result: TimestampedReading[] = [];
+  const readingCopy = history.readings.slice();
+  const minDate = min(readingCopy.map((reading) => reading.timestamp));
+  const maxDate = max(readingCopy.map((reading) => reading.timestamp));
+
+  const timeSteps = [];
+  let d = minDate;
+  while (d <= maxDate) {
+    timeSteps.push(d);
+    d = addMinutes(d, minutes);
+  }
+
+  timeSteps.forEach((timeStep) => {
+    result.push({
+      timestamp: timeStep,
+      quality: "100",
+      value: readingCopy
+        .filter(
+          (reading) =>
+            reading.timestamp >= timeStep &&
+            reading.timestamp < addMinutes(timeStep, 10)
+        )
+        .reduce((a, b) => a + b.value, 0),
+    });
   });
 
-// This function is used to get the total rain calculated from list of DB values
+  return {
+    label: history.label,
+    readings: result,
+  };
+};
+
+// Used to get the total rain calculated from list of DB values
 // Uses AllGaugeValues so each gauge can be calculated at the same time
 export const collectAllGaugeValuesIntoTotals = (
   values: AllGaugeValues[],

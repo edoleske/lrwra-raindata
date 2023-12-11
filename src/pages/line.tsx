@@ -12,12 +12,11 @@ const LineGraphPage = () => {
 
   const [queryInput, setQueryInput] = useState({
     gauge: "ADAMS.AF2295LQT",
-    samples: 200,
     startDate: sub(new Date(), { months: 1 }),
     endDate: new Date(),
   });
 
-  const historyQuery = api.raindata.interpolatedSamples.useQuery(queryInput);
+  const historyQuery = api.raindata.lineHistory.useQuery(queryInput);
 
   const getChartDimensions = () => ({
     width: Math.max(300, (divRef.current?.clientWidth ?? 0) - 64),

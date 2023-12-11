@@ -12,7 +12,6 @@ const LineGraphParameters = ({
   setQueryInput,
 }: LineGraphParametersProps) => {
   const [selectedGauge, setSelectedGauge] = useState(queryInput.gauge);
-  const [samples, setSamples] = useState(queryInput.samples);
   const [startDate, setStartDate] = useState(queryInput.startDate);
   const [endDate, setEndDate] = useState(queryInput.endDate);
 
@@ -21,7 +20,6 @@ const LineGraphParameters = ({
   const updateQueryInput = () => {
     setQueryInput({
       gauge: selectedGauge,
-      samples: samples,
       startDate: startDate,
       endDate: endDate,
     });
@@ -30,24 +28,9 @@ const LineGraphParameters = ({
   const parametersModified = () => {
     return (
       queryInput.gauge !== selectedGauge ||
-      queryInput.samples !== samples ||
       !isSameDay(queryInput.startDate, startDate) ||
       !isSameDay(queryInput.endDate, endDate)
     );
-  };
-
-  const onSamplesChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    let value = event.target.value;
-
-    if (isNaN(+value) || +value < 0) {
-      value = "100";
-    }
-
-    if (+value > 1000) {
-      value = "1000";
-    }
-
-    setSamples(+value);
   };
 
   const onStartDateChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -93,26 +76,6 @@ const LineGraphParameters = ({
             </option>
           ))}
         </select>
-      </div>
-      <div className="w-full max-w-xs">
-        <label className="label">
-          <span className="label-text">Samples</span>
-          <span className="label-text-alt italic">{samples}</span>
-        </label>
-        <input
-          type="range"
-          className="range"
-          value={samples}
-          onChange={onSamplesChange}
-          min="100"
-          max="1000"
-          step="100"
-        />
-        <div className="flex w-full justify-between px-2 text-xs">
-          {Array.from({ length: 10 }, (_, i) => (
-            <span key={i}>|</span>
-          ))}
-        </div>
       </div>
       <div className="w-full max-w-xs">
         <label className="label">

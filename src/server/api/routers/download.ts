@@ -1,46 +1,16 @@
 import { TRPCError } from "@trpc/server";
-import { addDays, compareAsc, differenceInDays, format } from "date-fns";
+import { addDays, format } from "date-fns";
 import { z } from "zod";
-
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 import { getRainGaugeLabel, pureDate } from "~/utils/utils";
-import { handleError } from "../utils";
+import { handleError, validateDates } from "~/server/api/utils";
 import {
   getDailyTotalHistory,
   getDailyTotalHistoryAll,
   getRainGauges,
   getRawData,
   getRawDataAll,
-} from "../queries/raindatabase";
-
-const validateDates = (start: Date, end: Date) => {
-  if (
-    compareAsc(new Date(), start) !== 1 &&
-    compareAsc(new Date(), end) !== 1
-  ) {
-    throw new TRPCError({
-      code: "BAD_REQUEST",
-      message: `No data available for the future.`,
-    });
-  }
-
-  if (compareAsc(end, start) !== 1) {
-    throw new TRPCError({
-      code: "BAD_REQUEST",
-      message: `End date ${format(
-        end,
-        "yyyy-mm-DD"
-      )} is before start date ${format(start, "yyyy-mm-DD")}`,
-    });
-  }
-
-  if (Math.abs(differenceInDays(start, end)) > 31) {
-    throw new TRPCError({
-      code: "BAD_REQUEST",
-      message: "Cannot retrieve more than 31 days of data at once.",
-    });
-  }
-};
+} from "~/server/api/queries/raindatabase";
 
 export const downloadRouter = createTRPCRouter({
   downloadCSV: publicProcedure
