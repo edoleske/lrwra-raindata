@@ -14,6 +14,7 @@ const DownloadPage = () => {
   const [startDate, setStartDate] = useState(format(new Date(), "yyyy-MM-dd"));
   const [endDate, setEndDate] = useState(format(new Date(), "yyyy-MM-dd"));
   const [frequency, setFrequency] = useState(1);
+  const [normalize, setNormalize] = useState(false);
 
   const rainGauges = api.raindata.rainGauges.useQuery();
   const fileMutation = api.download.downloadCSV.useMutation();
@@ -35,6 +36,8 @@ const DownloadPage = () => {
               gauge: selectedGauge,
               startDate: parse(startDate, "yyyy-MM-dd", new Date()),
               endDate: parse(endDate, "yyyy-MM-dd", new Date()),
+              frequency: frequency,
+              normalize: normalize,
             },
             { onError: (error) => addAlert(error.message, "error") }
           );
@@ -176,6 +179,21 @@ const DownloadPage = () => {
         </select>
       </div>
       {DateForm()}
+      {selectedGauge !== "all" && (
+        <div className="m-auto w-full max-w-xs md:ml-0">
+          <label className="label">
+            <span className="label-text">Value Type</span>
+          </label>
+          <select
+            className="select-bordered select w-full"
+            value={normalize ? "true" : "false"}
+            onChange={(e) => setNormalize(e.currentTarget.value === "true")}
+          >
+            <option value={"false"}>Raw Reading (in.)</option>
+            <option value={"true"}>Increase Since Last Time Step (in.)</option>
+          </select>
+        </div>
+      )}
       <div className="m-auto w-full max-w-xs md:ml-0">
         <label className="label">
           <span className="label-text">Sample Frequency</span>
@@ -186,11 +204,11 @@ const DownloadPage = () => {
           onChange={(e) => setFrequency(+e.currentTarget.value)}
         >
           <option value={1}>Every minute</option>
-          {/* <option value={5}>Every 5 minutes</option>
+          <option value={5}>Every 5 minutes</option>
           <option value={10}>Every 10 minutes</option>
           <option value={15}>Every 15 minutes</option>
           <option value={30}>Every 30 minutes</option>
-          <option value={60}>Every hour</option> */}
+          <option value={60}>Every hour</option>
           <option value={86400}>Daily</option>
         </select>
       </div>

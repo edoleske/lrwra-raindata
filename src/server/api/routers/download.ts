@@ -3,7 +3,11 @@ import { addDays, format } from "date-fns";
 import { z } from "zod";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 import { getRainGaugeLabel, pureDate } from "~/utils/utils";
-import { handleError, validateDates } from "~/server/api/utils";
+import {
+  handleError,
+  normalizeValues,
+  validateDates,
+} from "~/server/api/utils";
 import {
   getDailyTotalHistory,
   getDailyTotalHistoryAll,
@@ -19,6 +23,8 @@ export const downloadRouter = createTRPCRouter({
         gauge: z.string(),
         startDate: z.date(),
         endDate: z.date(),
+        frequency: z.number().positive().lte(60).default(1),
+        normalize: z.boolean().default(false),
       })
     )
     .mutation(async ({ input }) => {
@@ -41,7 +47,7 @@ export const downloadRouter = createTRPCRouter({
 
         let csvfile = "";
         if (input.gauge === "all") {
-          const history = await getRawDataAll(start, end);
+          const history = await getRawDataAll(start, end, input.frequency);
 
           // Get gauges that we have data for in history
           const lastRow = history.at(-1);
@@ -72,7 +78,16 @@ export const downloadRouter = createTRPCRouter({
               .join(",")}\r\n`;
           });
         } else {
-          const history = await getRawData(input.gauge, start, end);
+          const history = await getRawData(
+            input.gauge,
+            start,
+            end,
+            input.frequency
+          );
+
+          if (input.normalize) {
+            history.readings = normalizeValues(history.readings);
+          }
 
           // Generate CSV file as string
           csvfile = '"Rain Gauge","Timestamp","Value","Quality"\r\n';

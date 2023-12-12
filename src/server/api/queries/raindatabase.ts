@@ -151,7 +151,8 @@ export const getTotalBetweenTwoDates = async (
 export const getRawData = async (
   gauge: string,
   start: Date,
-  end: Date
+  end: Date,
+  frequency = 1
 ): Promise<SingleGaugeHistory> => {
   const startString = format(start, "yyyy-MM-dd");
   const endString = format(end, "yyyy-MM-dd");
@@ -160,7 +161,16 @@ export const getRawData = async (
     .where("tag", gauge)
     .where("timestamp", ">=", startString)
     .where("timestamp", "<", endString)
-    .select("timestamp", "value", "quality");
+    .select("timestamp", "value", "quality")
+    .modify((builder) => {
+      if (frequency > 1 && frequency < 60) {
+        void builder.where(
+          rainDataDB.raw(`DATEPART(mi, timestamp) % ${frequency} = 0`)
+        );
+      } else if (frequency !== 1) {
+        void builder.where(rainDataDB.raw("DATEPART(mi, timestamp) = 0"));
+      }
+    });
 
   const result = {
     label: gauge,
@@ -187,7 +197,7 @@ export const getRawData = async (
   return result;
 };
 
-export const getRawDataAll = async (start: Date, end: Date) => {
+export const getRawDataAll = async (start: Date, end: Date, frequency = 1) => {
   const startString = format(start, "yyyy-MM-dd");
   const endString = format(end, "yyyy-MM-dd");
 
@@ -195,7 +205,16 @@ export const getRawDataAll = async (start: Date, end: Date) => {
     .where("timestamp", ">=", startString)
     .where("timestamp", "<", endString)
     .orderBy("timestamp", "tag")
-    .select("tag", "timestamp", "value", "quality");
+    .select("tag", "timestamp", "value", "quality")
+    .modify((builder) => {
+      if (frequency > 1 && frequency < 60) {
+        void builder.where(
+          rainDataDB.raw(`DATEPART(mi, timestamp) % ${frequency} = 0`)
+        );
+      } else if (frequency !== 1) {
+        void builder.where(rainDataDB.raw("DATEPART(mi, timestamp) = 0"));
+      }
+    });
 
   if (rawReadings.length <= 0) {
     throw new Error(
