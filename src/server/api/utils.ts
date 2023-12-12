@@ -10,6 +10,11 @@ import {
 } from "date-fns";
 
 export const handleError = (error: unknown) => {
+  // Pass-through already created TRPC errors
+  if (error instanceof TRPCError) {
+    throw error;
+  }
+
   // String(err) works for all errors except for database errors
   // JSON.stringify gives more info on why iHistorian's OLEDB provider errored
   const parsedJSON = JSON.stringify(error);

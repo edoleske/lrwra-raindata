@@ -41,7 +41,7 @@ export const chartRouter = createTRPCRouter({
           });
         }
 
-        validateDates(input.startDate, input.endDate, 365);
+        validateDates(input.startDate, input.endDate, 730);
         const deltaDays = Math.abs(
           differenceInDays(input.startDate, input.endDate)
         );
