@@ -17,14 +17,16 @@ import {
 } from "./ihistorian";
 
 export const getRainGauges = async () => {
-  const result: RainGaugeInfo[] = await rainDataDB("gauges").select(
-    "tag",
-    "label",
-    "label_short",
-    "label_long",
-    "address",
-    "coordinates"
-  );
+  const result: RainGaugeInfo[] = await rainDataDB("gauges")
+    .orderBy("unique_id")
+    .select(
+      "tag",
+      "label",
+      "label_short",
+      "label_long",
+      "address",
+      "coordinates"
+    );
   return result;
 };
 
