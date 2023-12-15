@@ -216,12 +216,6 @@ export const getRawDataAll = async (start: Date, end: Date, frequency = 1) => {
       }
     });
 
-  if (rawReadings.length <= 0) {
-    throw new Error(
-      `No data found for date range: ${startString}-${endString}`
-    );
-  }
-
   // Knex adjusts DB datetimes as if they are UTC (They're not)
   rawReadings.forEach(
     (reading) => (reading.timestamp = adjustDateTimezone(reading.timestamp))
@@ -257,6 +251,12 @@ export const getRawDataAll = async (start: Date, end: Date, frequency = 1) => {
       (reading) =>
         reading.timestamp.getTime() >= start.getTime() &&
         reading.timestamp.getTime() <= end.getTime()
+    );
+  }
+
+  if (result.length <= 0 && todayReadings.length <= 0) {
+    throw new Error(
+      `No data found for date range: ${startString}-${endString}`
     );
   }
 
