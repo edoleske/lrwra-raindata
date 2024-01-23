@@ -8,58 +8,58 @@ import { api } from "~/utils/api";
 import { pureDate } from "~/utils/utils";
 
 const BarChartPage = () => {
-  const divRef = useRef<HTMLDivElement>(null);
-  const { height: wHeight } = useWindowDimensions();
+	const divRef = useRef<HTMLDivElement>(null);
+	const { height: wHeight } = useWindowDimensions();
 
-  const [queryInput, setQueryInput] = useState({
-    monthData: true,
-    date: sub(new Date(), { months: 1 }),
-    gauge: "",
-  });
+	const [queryInput, setQueryInput] = useState({
+		monthData: true,
+		date: sub(new Date(), { months: 1 }),
+		gauge: "",
+	});
 
-  const dataQuery = api.chart.barHistory.useQuery(queryInput);
+	const dataQuery = api.chart.barHistory.useQuery(queryInput);
 
-  const getChartDimensions = () => ({
-    width: Math.max(300, (divRef.current?.clientWidth ?? 0) - 64),
-    height: Math.max(200, wHeight * 0.6),
-    margin: { top: 50, right: 50, bottom: 50, left: 50 },
-  });
+	const getChartDimensions = () => ({
+		width: Math.max(300, (divRef.current?.clientWidth ?? 0) - 64),
+		height: Math.max(200, wHeight * 0.6),
+		margin: { top: 50, right: 50, bottom: 50, left: 50 },
+	});
 
-  const Chart = () => {
-    if (dataQuery.isError) {
-      return <QueryErrorAlert message={dataQuery.error.message} />;
-    }
+	const Chart = () => {
+		if (dataQuery.isError) {
+			return <QueryErrorAlert message={dataQuery.error.message} />;
+		}
 
-    if (!dataQuery.data) {
-      return (
-        <div className="py-4 text-center">
-          <div className="spinner spinner-xl spinner-primary"></div>
-        </div>
-      );
-    }
+		if (!dataQuery.data) {
+			return (
+				<div className="py-4 text-center">
+					<div className="spinner spinner-xl spinner-primary" />
+				</div>
+			);
+		}
 
-    return (
-      <BarChart
-        data={dataQuery.data.readings.map((r) => ({
-          date: queryInput.monthData ? pureDate(r.timestamp) : r.timestamp,
-          value: r.value,
-        }))}
-        dimensions={getChartDimensions()}
-      />
-    );
-  };
+		return (
+			<BarChart
+				data={dataQuery.data.readings.map((r) => ({
+					date: queryInput.monthData ? pureDate(r.timestamp) : r.timestamp,
+					value: r.value,
+				}))}
+				dimensions={getChartDimensions()}
+			/>
+		);
+	};
 
-  return (
-    <>
-      <BarGraphParameters
-        queryInput={queryInput}
-        setQueryInput={setQueryInput}
-      />
-      <div className="min-w-sm" ref={divRef}>
-        {Chart()}
-      </div>
-    </>
-  );
+	return (
+		<>
+			<BarGraphParameters
+				queryInput={queryInput}
+				setQueryInput={setQueryInput}
+			/>
+			<div className="min-w-sm" ref={divRef}>
+				{Chart()}
+			</div>
+		</>
+	);
 };
 
 export default BarChartPage;

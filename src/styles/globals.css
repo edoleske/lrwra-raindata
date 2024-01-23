@@ -3,11 +3,11 @@
 @tailwind utilities;
 
 .height-minus-appbar {
-  height: calc(100vh - 64px) !important;
+  height: calc(100svh - 64px) !important;
 }
 
 .height-minus-appbar-minus-padding {
-  min-height: calc(100vh - 64px - 32px) !important;
+  min-height: calc(100svh - 64px - 32px) !important;
 }
 
 .spinner {
