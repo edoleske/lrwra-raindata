@@ -5,14 +5,14 @@ import { z } from "zod";
  * built with invalid env vars.
  */
 const server = z.object({
-  NODE_ENV: z.enum(["development", "test", "production"]),
-  IHIST_DB_USER: z.string(),
-  IHIST_DB_PASSWORD: z.string(),
-  IHIST_DB_SOURCE: z.string(),
-  PORT: z.string(),
-  DB_HOST: z.string(),
-  DB_USER: z.string(),
-  DB_PASS: z.string(),
+	NODE_ENV: z.enum(["development", "test", "production"]),
+	IHIST_DB_USER: z.string(),
+	IHIST_DB_PASSWORD: z.string(),
+	IHIST_DB_SOURCE: z.string(),
+	PORT: z.string(),
+	DB_HOST: z.string(),
+	DB_USER: z.string(),
+	DB_PASS: z.string(),
 });
 
 /**
@@ -20,7 +20,7 @@ const server = z.object({
  * built with invalid env vars. To expose them to the client, prefix them with `NEXT_PUBLIC_`.
  */
 const client = z.object({
-  // NEXT_PUBLIC_CLIENTVAR: z.string().min(1),
+	// NEXT_PUBLIC_CLIENTVAR: z.string().min(1),
 });
 
 /**
@@ -30,15 +30,15 @@ const client = z.object({
  * @type {Record<keyof z.infer<typeof server> | keyof z.infer<typeof client>, string | undefined>}
  */
 const processEnv = {
-  NODE_ENV: process.env.NODE_ENV,
-  IHIST_DB_USER: process.env.IHIST_DB_USER,
-  IHIST_DB_PASSWORD: process.env.IHIST_DB_PASSWORD,
-  IHIST_DB_SOURCE: process.env.IHIST_DB_SOURCE,
-  PORT: process.env.PORT,
-  DB_HOST: process.env.DB_HOST,
-  DB_USER: process.env.DB_USER,
-  DB_PASS: process.env.DB_PASS,
-  // NEXT_PUBLIC_CLIENTVAR: process.env.NEXT_PUBLIC_CLIENTVAR,
+	NODE_ENV: process.env.NODE_ENV,
+	IHIST_DB_USER: process.env.IHIST_DB_USER,
+	IHIST_DB_PASSWORD: process.env.IHIST_DB_PASSWORD,
+	IHIST_DB_SOURCE: process.env.IHIST_DB_SOURCE,
+	PORT: process.env.PORT,
+	DB_HOST: process.env.DB_HOST,
+	DB_USER: process.env.DB_USER,
+	DB_PASS: process.env.DB_PASS,
+	// NEXT_PUBLIC_CLIENTVAR: process.env.NEXT_PUBLIC_CLIENTVAR,
 };
 
 // Don't touch the part below
@@ -52,37 +52,37 @@ const merged = server.merge(client);
 
 let env = /** @type {MergedOutput} */ (process.env);
 
-if (!!process.env.SKIP_ENV_VALIDATION == false) {
-  const isServer = typeof window === "undefined";
+if (!!process.env.SKIP_ENV_VALIDATION === false) {
+	const isServer = typeof window === "undefined";
 
-  const parsed = /** @type {MergedSafeParseReturn} */ (
-    isServer
-      ? merged.safeParse(processEnv) // on server we can validate all env vars
-      : client.safeParse(processEnv) // on client we can only validate the ones that are exposed
-  );
+	const parsed = /** @type {MergedSafeParseReturn} */ (
+		isServer
+			? merged.safeParse(processEnv) // on server we can validate all env vars
+			: client.safeParse(processEnv) // on client we can only validate the ones that are exposed
+	);
 
-  if (parsed.success === false) {
-    console.error(
-      "❌ Invalid environment variables:",
-      parsed.error.flatten().fieldErrors
-    );
-    throw new Error("Invalid environment variables");
-  }
+	if (parsed.success === false) {
+		console.error(
+			"❌ Invalid environment variables:",
+			parsed.error.flatten().fieldErrors,
+		);
+		throw new Error("Invalid environment variables");
+	}
 
-  env = new Proxy(parsed.data, {
-    get(target, prop) {
-      if (typeof prop !== "string") return undefined;
-      // Throw a descriptive error if a server-side env var is accessed on the client
-      // Otherwise it would just be returning `undefined` and be annoying to debug
-      if (!isServer && !prop.startsWith("NEXT_PUBLIC_"))
-        throw new Error(
-          process.env.NODE_ENV === "production"
-            ? "❌ Attempted to access a server-side environment variable on the client"
-            : `❌ Attempted to access server-side environment variable '${prop}' on the client`
-        );
-      return target[/** @type {keyof typeof target} */ (prop)];
-    },
-  });
+	env = new Proxy(parsed.data, {
+		get(target, prop) {
+			if (typeof prop !== "string") return undefined;
+			// Throw a descriptive error if a server-side env var is accessed on the client
+			// Otherwise it would just be returning `undefined` and be annoying to debug
+			if (!isServer && !prop.startsWith("NEXT_PUBLIC_"))
+				throw new Error(
+					process.env.NODE_ENV === "production"
+						? "❌ Attempted to access a server-side environment variable on the client"
+						: `❌ Attempted to access server-side environment variable '${prop}' on the client`,
+				);
+			return target[/** @type {keyof typeof target} */ (prop)];
+		},
+	});
 }
 
 export { env };

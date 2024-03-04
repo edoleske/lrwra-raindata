@@ -1,4 +1,4 @@
 interface IHistValues {
-  timestamp: string;
-  [key: string]: number | string;
+	timestamp: string;
+	[key: string]: number | string;
 }

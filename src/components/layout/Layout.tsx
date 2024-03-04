@@ -8,119 +8,119 @@ import AppNavbar from "~/components/layout/AppNavbar";
 import GlobalAlertProvider from "../globalAlerts/GlobalAlertProvider";
 
 interface LayoutProps {
-  children: React.ReactNode;
+	children: React.ReactNode;
 }
 
 const Layout = ({ children }: LayoutProps) => {
-  const router = useRouter();
+	const router = useRouter();
 
-  const { theme, setTheme } = useTheme();
+	const { theme, setTheme } = useTheme();
 
-  const [drawerOpen, setDrawerOpen] = useState(false);
+	const [drawerOpen, setDrawerOpen] = useState(false);
 
-  const body = () => {
-    return (
-      <>
-        <AppNavbar menuOpen={drawerOpen} onMenuOpen={setDrawerOpen} />
-        <div className="height-minus-appbar drawer-mobile drawer">
-          <input
-            id="app-drawer"
-            type="checkbox"
-            className="drawer-toggle"
-            checked={drawerOpen}
-            onChange={(e) => setDrawerOpen(e.target.checked)}
-          />
-          <div className="drawer-content">
-            <main className="height-minus-appbar">{children}</main>
-          </div>
-          <div className="drawer-side">
-            <label htmlFor="app-drawer" className="drawer-overlay"></label>
-            <ul className="menu w-60 overflow-y-auto bg-base-300 p-4 font-semibold text-base-content">
-              <li className="menu-title">Visualizations</li>
-              <li>
-                <Link
-                  href="/"
-                  className={router.asPath === "/" ? "active" : ""}
-                >
-                  Gauge Map
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/line"
-                  className={router.asPath === "/line" ? "active" : ""}
-                >
-                  Dynamic Line Graph
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/bar"
-                  className={router.asPath === "/bar" ? "active" : ""}
-                >
-                  Bar Graph
-                </Link>
-              </li>
-              <li className="menu-title">Data</li>
-              <li>
-                <Link
-                  href="/table"
-                  className={router.asPath === "/table" ? "active" : ""}
-                >
-                  Totals
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/download"
-                  className={router.asPath === "/download" ? "active" : ""}
-                >
-                  Download
-                </Link>
-              </li>
-              <li className="menu-title">Misc</li>
-              <li>
-                <Link
-                  href="/gauges"
-                  className={router.asPath === "/gauges" ? "active" : ""}
-                >
-                  Gauge Info
-                </Link>
-              </li>
-              <label className="swap btn-ghost swap-rotate btn-circle btn mt-auto">
-                <input
-                  type="checkbox"
-                  onChange={() =>
-                    setTheme(theme === "corporate" ? "business" : "corporate")
-                  }
-                />
-                <MdOutlineLightMode className="swap-on" size={26} />
-                <MdOutlineDarkMode className="swap-off" size={26} />
-              </label>
-            </ul>
-          </div>
-        </div>
-      </>
-    );
-  };
+	const body = () => {
+		return (
+			<>
+				<AppNavbar menuOpen={drawerOpen} onMenuOpen={setDrawerOpen} />
+				<div className="height-minus-appbar drawer-mobile drawer">
+					<input
+						id="app-drawer"
+						type="checkbox"
+						className="drawer-toggle"
+						checked={drawerOpen}
+						onChange={(e) => setDrawerOpen(e.target.checked)}
+					/>
+					<div className="drawer-content">
+						<main className="height-minus-appbar">{children}</main>
+					</div>
+					<div className="drawer-side">
+						<label htmlFor="app-drawer" className="drawer-overlay" />
+						<ul className="menu w-60 overflow-y-auto bg-base-300 p-4 font-semibold text-base-content">
+							<li className="menu-title">Visualizations</li>
+							<li>
+								<Link
+									href="/"
+									className={router.asPath === "/" ? "active" : ""}
+								>
+									Gauge Map
+								</Link>
+							</li>
+							<li>
+								<Link
+									href="/line"
+									className={router.asPath === "/line" ? "active" : ""}
+								>
+									Dynamic Line Graph
+								</Link>
+							</li>
+							<li>
+								<Link
+									href="/bar"
+									className={router.asPath === "/bar" ? "active" : ""}
+								>
+									Bar Graph
+								</Link>
+							</li>
+							<li className="menu-title">Data</li>
+							<li>
+								<Link
+									href="/table"
+									className={router.asPath === "/table" ? "active" : ""}
+								>
+									Totals
+								</Link>
+							</li>
+							<li>
+								<Link
+									href="/download"
+									className={router.asPath === "/download" ? "active" : ""}
+								>
+									Download
+								</Link>
+							</li>
+							<li className="menu-title">Misc</li>
+							<li>
+								<Link
+									href="/gauges"
+									className={router.asPath === "/gauges" ? "active" : ""}
+								>
+									Gauge Info
+								</Link>
+							</li>
+							<label className="swap btn-ghost swap-rotate btn-circle btn mt-auto">
+								<input
+									type="checkbox"
+									onChange={() =>
+										setTheme(theme === "corporate" ? "business" : "corporate")
+									}
+								/>
+								<MdOutlineLightMode className="swap-on" size={26} />
+								<MdOutlineDarkMode className="swap-off" size={26} />
+							</label>
+						</ul>
+					</div>
+				</div>
+			</>
+		);
+	};
 
-  return (
-    <>
-      <Head>
-        <title>LRWRA Rain Data</title>
-        <meta
-          name="description"
-          content="Application to display data collected by rain gauges maintained by the Little Rock Water Reclamation Authority for utility and public use."
-        />
-        <meta
-          name="viewport"
-          content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0"
-        />
-        <link rel="icon" href="/favicon.ico" />
-      </Head>
-      <GlobalAlertProvider>{body()}</GlobalAlertProvider>
-    </>
-  );
+	return (
+		<>
+			<Head>
+				<title>LRWRA Rain Data</title>
+				<meta
+					name="description"
+					content="Application to display data collected by rain gauges maintained by the Little Rock Water Reclamation Authority for utility and public use."
+				/>
+				<meta
+					name="viewport"
+					content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0"
+				/>
+				<link rel="icon" href="/favicon.ico" />
+			</Head>
+			<GlobalAlertProvider>{body()}</GlobalAlertProvider>
+		</>
+	);
 };
 
 export default Layout;
