@@ -45,13 +45,13 @@ const BarGraphParameters = ({
 	};
 
 	return (
-		<div className="flex flex-col items-center gap-4 bg-base-200 p-8 md:flex-row md:items-end">
+		<div className="flex flex-col items-center gap-4 bg-base-200 p-4 md:p-8 md:flex-row md:items-end">
 			<div className="w-full max-w-xs">
 				<label className="label">
 					<span className="label-text">Rain Gauge</span>
 				</label>
 				<select
-					className="select-bordered select w-full"
+					className="select-bordered select select-sm md:select-md w-full"
 					value={selectedGauge}
 					onChange={(e) => setSelectedGauge(e.target.value)}
 				>
@@ -71,7 +71,7 @@ const BarGraphParameters = ({
 						<input
 							type="radio"
 							name="barGraphMonth"
-							className="radio mr-4"
+							className="radio radio-sm md:radio-md mr-4"
 							value="true"
 							checked={monthData}
 							onChange={(e) => setMonthData(e.target.value === "true")}
@@ -84,7 +84,7 @@ const BarGraphParameters = ({
 						<input
 							type="radio"
 							name="barGraphMonth"
-							className="radio mr-4"
+							className="radio radio-sm md:radio-md mr-4"
 							value="false"
 							checked={!monthData}
 							onChange={(e) => setMonthData(e.target.value === "true")}
@@ -99,7 +99,7 @@ const BarGraphParameters = ({
 				</label>
 				<input
 					type="date"
-					className="input-bordered input w-full"
+					className="input-bordered input input-sm md:input-md w-full"
 					value={format(date, "yyyy-MM-dd")}
 					onChange={onDateChange}
 				/>

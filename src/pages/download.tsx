@@ -159,7 +159,7 @@ const DownloadPage = () => {
 
 	const Form = () => (
 		<div className="m-auto flex-col items-center justify-center">
-			<div className="m-auto w-full max-w-xs md:ml-0">
+			<div className="m-auto w-full md:ml-0">
 				<label className="label">
 					<span className="label-text">Rain Gauge</span>
 				</label>
@@ -178,7 +178,7 @@ const DownloadPage = () => {
 			</div>
 			{DateForm()}
 			{selectedGauge !== "all" && (
-				<div className="m-auto w-full max-w-xs md:ml-0">
+				<div className="m-auto w-full md:ml-0">
 					<label className="label">
 						<span className="label-text">Value Type</span>
 					</label>
@@ -192,7 +192,7 @@ const DownloadPage = () => {
 					</select>
 				</div>
 			)}
-			<div className="m-auto w-full max-w-xs md:ml-0">
+			<div className="m-auto w-full  md:ml-0">
 				<label className="label">
 					<span className="label-text">Sample Frequency</span>
 				</label>

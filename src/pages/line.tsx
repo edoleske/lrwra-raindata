@@ -1,5 +1,5 @@
 import { sub } from "date-fns";
-import React, { useRef, useState } from "react";
+import React, { useMemo, useRef, useState } from "react";
 import LineChart from "~/components/LineChart";
 import QueryErrorAlert from "~/components/QueryErrorAlert";
 import LineGraphParameters from "~/components/graph/LineGraphParameters";
@@ -18,11 +18,15 @@ const LineGraphPage = () => {
 
 	const historyQuery = api.chart.lineHistory.useQuery(queryInput);
 
-	const getChartDimensions = () => ({
-		width: Math.max(300, (divRef.current?.clientWidth ?? 0) - 64),
-		height: Math.max(200, wHeight * 0.6),
-		margin: { top: 50, right: 50, bottom: 50, left: 50 },
-	});
+	// biome-ignore lint/correctness/useExhaustiveDependencies: clientWidth is a dependency
+	const chartDimensions = useMemo(() => {
+		const width = divRef.current?.clientWidth ?? 0;
+		return {
+			width: Math.max(300, width - 64),
+			height: Math.max(200, width <= 768 ? wHeight * 0.45 : wHeight * 0.65),
+			margin: { top: 32, right: 32, bottom: 48, left: 32 },
+		};
+	}, [divRef.current?.clientWidth, wHeight]);
 
 	const Chart = () => {
 		if (historyQuery.isError) {
@@ -43,7 +47,7 @@ const LineGraphPage = () => {
 					date: r.timestamp,
 					value: r.value,
 				}))}
-				dimensions={getChartDimensions()}
+				dimensions={chartDimensions}
 			/>
 		);
 	};

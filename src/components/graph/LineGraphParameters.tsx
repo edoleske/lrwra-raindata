@@ -60,13 +60,13 @@ const LineGraphParameters = ({
 	};
 
 	return (
-		<div className="flex flex-col items-center gap-4 bg-base-200 p-8 md:flex-row">
+		<div className="flex flex-col items-center gap-4 bg-base-200 p-4 md:p-8 md:flex-row">
 			<div className="w-full max-w-xs">
 				<label className="label">
 					<span className="label-text">Rain Gauge</span>
 				</label>
 				<select
-					className="select-bordered select w-full"
+					className="select-bordered select select-sm md:select-md w-full"
 					value={selectedGauge}
 					onChange={(e) => setSelectedGauge(e.target.value)}
 				>
@@ -83,7 +83,7 @@ const LineGraphParameters = ({
 				</label>
 				<input
 					type="date"
-					className="input-bordered input w-full"
+					className="input-bordered input input-sm md:input-md w-full"
 					value={format(startDate, "yyyy-MM-dd")}
 					onChange={onStartDateChange}
 				/>
@@ -94,22 +94,20 @@ const LineGraphParameters = ({
 				</label>
 				<input
 					type="date"
-					className="input-bordered input w-full"
+					className="input-bordered input input-sm md:input-md w-full"
 					value={format(endDate, "yyyy-MM-dd")}
 					onChange={onEndDateChange}
 				/>
 			</div>
-			<div className="mx-2 self-end">
-				<button
-					type="button"
-					className={`btn-primary btn ${
-						parametersModified() ? "" : "btn-disabled"
-					}`}
-					onClick={updateQueryInput}
-				>
-					Update
-				</button>
-			</div>
+			<button
+				type="button"
+				className={`btn-primary btn md:self-end ${
+					parametersModified() ? "" : "btn-disabled"
+				}`}
+				onClick={updateQueryInput}
+			>
+				Update
+			</button>
 		</div>
 	);
 };

@@ -35,7 +35,7 @@ const GaugeDetails = () => {
 		}
 
 		return (
-			<table className="table-zebra table-compact table">
+			<table className="table-zebra table-compact  table">
 				<thead>
 					<tr>
 						<th>Gauge</th>
