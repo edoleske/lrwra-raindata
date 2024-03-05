@@ -27,21 +27,21 @@ const TablePage = () => {
 					className={`tab-bordered tab ${tableType === 0 ? "tab-active" : ""}`}
 					onClick={() => setTableType(0)}
 				>
-					Day Total
+					Day
 				</button>
 				<button
 					type="button"
 					className={`tab-bordered tab ${tableType === 1 ? "tab-active" : ""}`}
 					onClick={() => setTableType(1)}
 				>
-					Month Total
+					Month
 				</button>
 				<button
 					type="button"
 					className={`tab-bordered tab ${tableType === 2 ? "tab-active" : ""}`}
 					onClick={() => setTableType(2)}
 				>
-					Custom Total
+					Custom
 				</button>
 			</div>
 			{TabContent()}
