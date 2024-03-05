@@ -15,6 +15,7 @@ const GaugeDetails = () => {
 			<tr
 				key={gauge.tag}
 				className="hover cursor-pointer"
+				tabIndex={0}
 				onClick={() => linkToGIS(gauge.coordinates)}
 				onKeyDown={(e) => {
 					if (e.key === "Enter") linkToGIS(gauge.coordinates);
