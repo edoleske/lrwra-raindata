@@ -33,13 +33,15 @@ const GaugeValuesTable = ({
 					<th>Gauge</th>
 					<th className="flex items-center justify-between">
 						Value (inches)
-						<button
-							type="button"
-							className="btn-xs btn-circle btn"
-							onClick={downloadQueryResult}
-						>
-							<MdDownload size={14} />
-						</button>
+						<div className="tooltip" data-tip="Download">
+							<button
+								type="button"
+								className="btn-xs btn-circle btn"
+								onClick={downloadQueryResult}
+							>
+								<MdDownload size={14} />
+							</button>
+						</div>
 					</th>
 				</tr>
 			</thead>
