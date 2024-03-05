@@ -2,7 +2,7 @@ import { TRPCError } from "@trpc/server";
 import { addDays, format } from "date-fns";
 import { z } from "zod";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
-import { getRainGaugeLabel, pureDate } from "~/utils/utils";
+import { pureDate } from "~/utils/utils";
 import {
 	handleError,
 	normalizeValues,
@@ -92,10 +92,10 @@ export const downloadRouter = createTRPCRouter({
 					// Generate CSV file as string
 					csvfile = '"Rain Gauge","Timestamp","Value","Quality"\r\n';
 					for (const reading of history.readings) {
-						csvfile += `"${getRainGaugeLabel(
-							history.label,
-							RainGaugeData,
-						)}","${format(reading.timestamp, "yyyy-MM-dd HH:mm:ss")}","${
+						csvfile += `"${
+							RainGaugeData.find((rg) => rg.tag === history.label)?.label ??
+							history.label
+						}","${format(reading.timestamp, "yyyy-MM-dd HH:mm:ss")}","${
 							reading.value
 						}","${reading.quality}"\r\n`;
 					}
@@ -170,10 +170,10 @@ export const downloadRouter = createTRPCRouter({
 					// Generate CSV file as string
 					csvfile = '"Rain Gauge","Timestamp","Value","Quality"\r\n';
 					for (const reading of history.readings) {
-						csvfile += `"${getRainGaugeLabel(
-							history.label,
-							RainGaugeData,
-						)}","${format(reading.timestamp, "yyyy-MM-dd")}","${
+						csvfile += `"${
+							RainGaugeData.find((rg) => rg.tag === history.label)?.label ??
+							history.label
+						}","${format(reading.timestamp, "yyyy-MM-dd")}","${
 							reading.value
 						}","${reading.quality}"\r\n`;
 					}

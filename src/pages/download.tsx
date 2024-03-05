@@ -4,7 +4,6 @@ import { useContext, useState } from "react";
 import { BsCalendarEvent, BsCalendarWeek } from "react-icons/bs";
 import { GlobalAlertContext } from "~/components/globalAlerts/GlobalAlertProvider";
 import { api } from "~/utils/api";
-import { getRainGaugeLabelShort } from "~/utils/utils";
 
 const DownloadPage = () => {
 	const addAlert = useContext(GlobalAlertContext);
@@ -43,11 +42,10 @@ const DownloadPage = () => {
 				  );
 
 		if (result) {
-			const gaugeString = getRainGaugeLabelShort(
-				selectedGauge,
-				rainGauges.data,
-				true,
-			);
+			const gaugeString =
+				rainGauges.data
+					?.find((rg) => rg.tag === selectedGauge)
+					?.label_short.replace(/\s/g, "") ?? selectedGauge;
 			let dateString = startDate.replace("-", "");
 			if (dateRange) {
 				dateString += `-${endDate.replace("-", "")}`;

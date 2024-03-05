@@ -25,35 +25,6 @@ export const adjustDateTimezone = (d: Date) => {
 	return new Date(d.getTime() + userTimezoneOffset);
 };
 
-// Utility function to convert gauge tag to label
-export const getRainGaugeLabel = (
-	tag: string,
-	RainGaugeData: RainGaugeInfo[] | undefined,
-) => {
-	if (!RainGaugeData) return "";
-	const gauge = RainGaugeData.find((rg) => rg.tag === tag);
-	if (gauge) {
-		return gauge.label;
-	}
-	return tag;
-};
-
-// Utility function to convert gauge tag to short label
-export const getRainGaugeLabelShort = (
-	tag: string,
-	RainGaugeData: RainGaugeInfo[] | undefined,
-	stripSpace = false,
-) => {
-	if (!RainGaugeData) return "";
-	const gauge = RainGaugeData.find((rg) => rg.tag === tag);
-	if (gauge) {
-		return stripSpace
-			? gauge.label_short.replace(/\s/g, "")
-			: gauge.label_short;
-	}
-	return tag;
-};
-
 // Either get datetime as second before midnight, or current time (- 1min) if date is today
 // Formats the datetime to be used in iHistorian query
 export const iHistFormatDT = (date: Date) =>
