@@ -27,7 +27,7 @@ const GaugeValuesTable = ({
 	};
 
 	return (
-		<table className="table-zebra table-compact m-auto table w-full ">
+		<table className="table-zebra table-xs sm:table-sm m-auto table w-full ">
 			<thead>
 				<tr>
 					<th>Gauge</th>

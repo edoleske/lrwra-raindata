@@ -21,24 +21,24 @@ const TablePage = () => {
 
 	return (
 		<div className="px-8 pt-4 pb-2 lg:px-16">
-			<div className="tabs mb-4">
+			<div role="tablist" className="tabs tabs-bordered pb-4 w-fit">
 				<button
 					type="button"
-					className={`tab-bordered tab ${tableType === 0 ? "tab-active" : ""}`}
+					className={`tab ${tableType === 0 ? "tab-active" : ""}`}
 					onClick={() => setTableType(0)}
 				>
 					Day
 				</button>
 				<button
 					type="button"
-					className={`tab-bordered tab ${tableType === 1 ? "tab-active" : ""}`}
+					className={`tab ${tableType === 1 ? "tab-active" : ""}`}
 					onClick={() => setTableType(1)}
 				>
 					Month
 				</button>
 				<button
 					type="button"
-					className={`tab-bordered tab ${tableType === 2 ? "tab-active" : ""}`}
+					className={`tab ${tableType === 2 ? "tab-active" : ""}`}
 					onClick={() => setTableType(2)}
 				>
 					Custom

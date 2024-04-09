@@ -22,7 +22,7 @@ const Layout = ({ children }: LayoutProps) => {
 		return (
 			<>
 				<AppNavbar menuOpen={drawerOpen} onMenuOpen={setDrawerOpen} />
-				<div className="height-minus-appbar drawer-mobile drawer">
+				<div className="height-minus-appbar lg:drawer-open drawer">
 					<input
 						id="app-drawer"
 						type="checkbox"
@@ -30,12 +30,12 @@ const Layout = ({ children }: LayoutProps) => {
 						checked={drawerOpen}
 						onChange={(e) => setDrawerOpen(e.target.checked)}
 					/>
-					<div className="drawer-content">
-						<main className="height-minus-appbar">{children}</main>
+					<div className="drawer-content height-minus-appbar overflow-y-scroll">
+						<main className="h-full">{children}</main>
 					</div>
-					<div className="drawer-side">
+					<div className="drawer-side lg:height-minus-appbar h-full">
 						<label htmlFor="app-drawer" className="drawer-overlay" />
-						<ul className="menu w-60 overflow-y-auto bg-base-300 p-4 font-semibold text-base-content">
+						<ul className="menu w-60 overflow-y-auto bg-base-300 p-4 font-semibold text-base-content h-full">
 							<li className="menu-title">Visualizations</li>
 							<li>
 								<Link

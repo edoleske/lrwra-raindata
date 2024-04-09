@@ -8,7 +8,7 @@ interface AppNavbarProps {
 
 const AppNavbar = ({ menuOpen, onMenuOpen }: AppNavbarProps) => {
 	return (
-		<div className="navbar bg-primary text-primary-content">
+		<div className="navbar bg-primary text-primary-content h-16">
 			<div className="flex-none lg:hidden">
 				<label className="swap-rotate swap btn-ghost btn-circle btn">
 					<input
@@ -36,7 +36,7 @@ const AppNavbar = ({ menuOpen, onMenuOpen }: AppNavbarProps) => {
 				/>
 			</a>
 			<div className="flex-1">
-				<span className="ml-4 text-2xl font-bold">Rain Data</span>
+				<span className="ml-4 text-lg sm:text-2xl font-bold">Rain Data</span>
 			</div>
 		</div>
 	);
