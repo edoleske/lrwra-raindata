@@ -30,7 +30,7 @@ const Layout = ({ children }: LayoutProps) => {
 						checked={drawerOpen}
 						onChange={(e) => setDrawerOpen(e.target.checked)}
 					/>
-					<div className="drawer-content height-minus-appbar overflow-y-scroll">
+					<div className="drawer-content height-minus-appbar overflow-y-auto">
 						<main className="h-full">{children}</main>
 					</div>
 					<div className="drawer-side lg:height-minus-appbar h-full">
