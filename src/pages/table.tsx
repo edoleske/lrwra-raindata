@@ -23,6 +23,7 @@ const TablePage = () => {
 		<div className="px-8 pt-4 pb-2 lg:px-16">
 			<div role="tablist" className="tabs tabs-bordered pb-4 w-fit">
 				<button
+					role="tab"
 					type="button"
 					className={`tab ${tableType === 0 ? "tab-active" : ""}`}
 					onClick={() => setTableType(0)}
@@ -30,6 +31,7 @@ const TablePage = () => {
 					Day
 				</button>
 				<button
+					role="tab"
 					type="button"
 					className={`tab ${tableType === 1 ? "tab-active" : ""}`}
 					onClick={() => setTableType(1)}
@@ -37,6 +39,7 @@ const TablePage = () => {
 					Month
 				</button>
 				<button
+					role="tab"
 					type="button"
 					className={`tab ${tableType === 2 ? "tab-active" : ""}`}
 					onClick={() => setTableType(2)}

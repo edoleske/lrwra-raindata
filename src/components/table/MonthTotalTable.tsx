@@ -56,17 +56,17 @@ const MonthTotalTable = () => {
 				<h1 className="self-start basis-full flex-grow text-4xl font-bold">
 					Rain Totals by Month
 				</h1>
-				<div className="max-w-xs">
-					<label className="label">
+				<label className="max-w-xs">
+					<div className="label">
 						<span className="label-text">Month</span>
-					</label>
+					</div>
 					<input
 						type="date"
 						className="input-bordered input w-full"
 						value={month}
 						onChange={(event) => setMonth(event.target.value)}
 					/>
-				</div>
+				</label>
 				<div className="flex justify-center">
 					<button
 						type="button"

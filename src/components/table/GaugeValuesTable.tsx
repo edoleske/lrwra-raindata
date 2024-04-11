@@ -36,6 +36,7 @@ const GaugeValuesTable = ({
 						<div className="tooltip" data-tip="Download">
 							<button
 								type="button"
+								aria-label="Download"
 								className="btn-xs btn-circle btn"
 								onClick={downloadQueryResult}
 							>

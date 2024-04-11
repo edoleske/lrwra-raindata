@@ -26,6 +26,9 @@ const Layout = ({ children }: LayoutProps) => {
 					<input
 						id="app-drawer"
 						type="checkbox"
+						aria-label="Toggle Menu Open"
+						aria-haspopup="menu"
+						aria-expanded={drawerOpen}
 						className="drawer-toggle"
 						checked={drawerOpen}
 						onChange={(e) => setDrawerOpen(e.target.checked)}
@@ -35,10 +38,14 @@ const Layout = ({ children }: LayoutProps) => {
 					</div>
 					<div className="drawer-side lg:height-minus-appbar h-full">
 						<label htmlFor="app-drawer" className="drawer-overlay" />
-						<ul className="menu w-60 overflow-y-auto bg-base-300 p-4 font-semibold text-base-content h-full">
+						<ul
+							role="menu"
+							className="menu w-60 overflow-y-auto bg-base-300 p-4 font-semibold text-base-content h-full"
+						>
 							<li className="menu-title">Visualizations</li>
 							<li>
 								<Link
+									role="menuitem"
 									href="/"
 									className={router.asPath === "/" ? "active" : ""}
 								>
@@ -47,6 +54,7 @@ const Layout = ({ children }: LayoutProps) => {
 							</li>
 							<li>
 								<Link
+									role="menuitem"
 									href="/line"
 									className={router.asPath === "/line" ? "active" : ""}
 								>
@@ -55,6 +63,7 @@ const Layout = ({ children }: LayoutProps) => {
 							</li>
 							<li>
 								<Link
+									role="menuitem"
 									href="/bar"
 									className={router.asPath === "/bar" ? "active" : ""}
 								>
@@ -64,6 +73,7 @@ const Layout = ({ children }: LayoutProps) => {
 							<li className="menu-title">Data</li>
 							<li>
 								<Link
+									role="menuitem"
 									href="/table"
 									className={router.asPath === "/table" ? "active" : ""}
 								>
@@ -72,6 +82,7 @@ const Layout = ({ children }: LayoutProps) => {
 							</li>
 							<li>
 								<Link
+									role="menuitem"
 									href="/download"
 									className={router.asPath === "/download" ? "active" : ""}
 								>
@@ -81,6 +92,7 @@ const Layout = ({ children }: LayoutProps) => {
 							<li className="menu-title">Misc</li>
 							<li>
 								<Link
+									role="menuitem"
 									href="/gauges"
 									className={router.asPath === "/gauges" ? "active" : ""}
 								>
@@ -88,6 +100,7 @@ const Layout = ({ children }: LayoutProps) => {
 								</Link>
 							</li>
 							<label className="swap btn-ghost swap-rotate btn-circle btn mt-auto">
+								<span className="sr-only">Switch Theme</span>
 								<input
 									type="checkbox"
 									onChange={() =>
@@ -111,10 +124,6 @@ const Layout = ({ children }: LayoutProps) => {
 				<meta
 					name="description"
 					content="Application to display data collected by rain gauges maintained by the Little Rock Water Reclamation Authority for utility and public use."
-				/>
-				<meta
-					name="viewport"
-					content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0"
 				/>
 				<link rel="icon" href="/favicon.ico" />
 			</Head>

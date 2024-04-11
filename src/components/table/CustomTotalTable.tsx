@@ -71,28 +71,28 @@ const CustomTotalTable = () => {
 				<h1 className="self-start basis-full flex-grow text-4xl font-bold">
 					Rain Totals by Range
 				</h1>
-				<div className="max-w-xs">
-					<label className="label">
+				<label className="max-w-xs">
+					<div className="label">
 						<span className="label-text">Start Date</span>
-					</label>
+					</div>
 					<input
 						type="datetime-local"
 						className="input-bordered input w-full"
 						value={startDate}
 						onChange={(event) => setStartDate(event.target.value)}
 					/>
-				</div>
-				<div className="max-w-xs">
-					<label className="label">
+				</label>
+				<label className="max-w-xs">
+					<div className="label">
 						<span className="label-text">End Date</span>
-					</label>
+					</div>
 					<input
 						type="datetime-local"
 						className="input-bordered input w-full"
 						value={endDate}
 						onChange={(event) => setEndDate(event.target.value)}
 					/>
-				</div>
+				</label>
 				<button
 					type="button"
 					className={`btn-primary btn ${

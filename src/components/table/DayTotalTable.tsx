@@ -56,17 +56,17 @@ const DayTotalTable = () => {
 				<h1 className="self-start basis-full text-4xl font-bold flex-grow">
 					Rain Totals by Date
 				</h1>
-				<div className="max-w-xs">
-					<label className="label">
+				<label className="max-w-xs">
+					<div className="label">
 						<span className="label-text">Date</span>
-					</label>
+					</div>
 					<input
 						type="date"
 						className="input-bordered input w-full"
 						value={date}
 						onChange={(event) => setDate(event.target.value)}
 					/>
-				</div>
+				</label>
 				<button
 					type="button"
 					className={`btn-primary btn ${

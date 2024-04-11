@@ -46,10 +46,10 @@ const BarGraphParameters = ({
 
 	return (
 		<div className="flex flex-col items-center gap-4 bg-base-200 p-4 md:p-8 md:flex-row md:items-end">
-			<div className="w-full max-w-xs">
-				<label className="label">
+			<label className="w-full max-w-xs">
+				<div className="label">
 					<span className="label-text">Rain Gauge</span>
-				</label>
+				</div>
 				<select
 					className="select-bordered select select-sm md:select-md w-full"
 					value={selectedGauge}
@@ -61,11 +61,11 @@ const BarGraphParameters = ({
 						</option>
 					))}
 				</select>
-			</div>
+			</label>
 			<div className="w-full max-w-xs">
-				<label className="label">
+				<div className="label">
 					<span className="label-text">Data Range</span>
-				</label>
+				</div>
 				<div className="form-control">
 					<label className="label cursor-pointer justify-start">
 						<input
@@ -93,17 +93,17 @@ const BarGraphParameters = ({
 					</label>
 				</div>
 			</div>
-			<div className="w-full max-w-xs">
-				<label className="label">
+			<label className="w-full max-w-xs">
+				<div className="label">
 					<span className="label-text">Date</span>
-				</label>
+				</div>
 				<input
 					type="date"
 					className="input-bordered input input-sm md:input-md w-full"
 					value={format(date, "yyyy-MM-dd")}
 					onChange={onDateChange}
 				/>
-			</div>
+			</label>
 			<div className="mx-2">
 				<button
 					type="button"

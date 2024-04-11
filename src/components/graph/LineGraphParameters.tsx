@@ -61,10 +61,10 @@ const LineGraphParameters = ({
 
 	return (
 		<div className="flex flex-col items-center gap-4 bg-base-200 p-4 md:p-8 md:flex-row">
-			<div className="w-full max-w-xs">
-				<label className="label">
+			<label className="w-full max-w-xs">
+				<div className="label">
 					<span className="label-text">Rain Gauge</span>
-				</label>
+				</div>
 				<select
 					className="select-bordered select select-sm md:select-md w-full"
 					value={selectedGauge}
@@ -76,29 +76,29 @@ const LineGraphParameters = ({
 						</option>
 					))}
 				</select>
-			</div>
-			<div className="w-full max-w-xs">
-				<label className="label">
+			</label>
+			<label className="w-full max-w-xs">
+				<div className="label">
 					<span className="label-text">Start Date</span>
-				</label>
+				</div>
 				<input
 					type="date"
 					className="input-bordered input input-sm md:input-md w-full"
 					value={format(startDate, "yyyy-MM-dd")}
 					onChange={onStartDateChange}
 				/>
-			</div>
-			<div className="w-full max-w-xs">
-				<label className="label">
+			</label>
+			<label className="w-full max-w-xs">
+				<div className="label">
 					<span className="label-text">End Date</span>
-				</label>
+				</div>
 				<input
 					type="date"
 					className="input-bordered input input-sm md:input-md w-full"
 					value={format(endDate, "yyyy-MM-dd")}
 					onChange={onEndDateChange}
 				/>
-			</div>
+			</label>
 			<button
 				type="button"
 				className={`btn-primary btn md:self-end ${

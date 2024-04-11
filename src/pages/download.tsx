@@ -29,7 +29,7 @@ const DownloadPage = () => {
 							endDate: parse(endDate, "yyyy-MM-dd", new Date()),
 						},
 						{ onError: (error) => addAlert(error.message, "error") },
-				  )
+					)
 				: await fileMutation.mutateAsync(
 						{
 							gauge: selectedGauge,
@@ -39,7 +39,7 @@ const DownloadPage = () => {
 							normalize: normalize,
 						},
 						{ onError: (error) => addAlert(error.message, "error") },
-				  );
+					);
 
 		if (result) {
 			const gaugeString =
@@ -101,17 +101,17 @@ const DownloadPage = () => {
 			return (
 				<div className="flex flex-col gap-2 md:flex-row">
 					<div className="flex items-end gap-2">
-						<div className="w-full max-w-xs">
-							<label className="label">
+						<label className="w-full max-w-xs">
+							<div className="label">
 								<span className="label-text">Start Date</span>
-							</label>
+							</div>
 							<input
 								type="date"
 								className="input-bordered input w-full"
 								value={startDate}
 								onChange={onStartDateChange}
 							/>
-						</div>
+						</label>
 						<div className="tooltip" data-tip="Use Single Date">
 							<button type="button" className="btn" onClick={toggleDateRange}>
 								<BsCalendarEvent size={18} />
@@ -119,35 +119,40 @@ const DownloadPage = () => {
 						</div>
 					</div>
 
-					<div className="w-full max-w-xs">
-						<label className="label">
+					<label className="w-full max-w-xs">
+						<div className="label">
 							<span className="label-text">End Date</span>
-						</label>
+						</div>
 						<input
 							type="date"
 							className="input-bordered input w-full"
 							value={endDate}
 							onChange={onEndDateChange}
 						/>
-					</div>
+					</label>
 				</div>
 			);
 		}
 		return (
 			<div className="flex items-end gap-2">
-				<div className="w-full max-w-xs">
-					<label className="label">
+				<label className="w-full max-w-xs">
+					<div className="label">
 						<span className="label-text">Date</span>
-					</label>
+					</div>
 					<input
 						type="date"
 						className="input-bordered input w-full"
 						value={startDate}
 						onChange={onDateChange}
 					/>
-				</div>
+				</label>
 				<div className="tooltip" data-tip="Use Date Range">
-					<button type="button" className="btn" onClick={toggleDateRange}>
+					<button
+						type="button"
+						aria-label="Toggle Single Date and Date Range"
+						className="btn"
+						onClick={toggleDateRange}
+					>
 						<BsCalendarWeek size={18} />
 					</button>
 				</div>
@@ -157,10 +162,10 @@ const DownloadPage = () => {
 
 	const Form = () => (
 		<div className="m-auto flex-col items-center justify-center">
-			<div className="m-auto w-full md:ml-0">
-				<label className="label">
+			<label className="m-auto w-full md:ml-0">
+				<div className="label">
 					<span className="label-text">Rain Gauge</span>
-				</label>
+				</div>
 				<select
 					className="select-bordered select w-full"
 					value={selectedGauge}
@@ -173,13 +178,13 @@ const DownloadPage = () => {
 						</option>
 					))}
 				</select>
-			</div>
+			</label>
 			{DateForm()}
 			{selectedGauge !== "all" && (
-				<div className="m-auto w-full md:ml-0">
-					<label className="label">
+				<label className="m-auto w-full md:ml-0">
+					<div className="label">
 						<span className="label-text">Value Type</span>
-					</label>
+					</div>
 					<select
 						className="select-bordered select w-full"
 						value={normalize ? "true" : "false"}
@@ -188,12 +193,12 @@ const DownloadPage = () => {
 						<option value={"false"}>Raw Reading (in.)</option>
 						<option value={"true"}>Increase Since Last Time Step (in.)</option>
 					</select>
-				</div>
-			)}
-			<div className="m-auto w-full  md:ml-0">
-				<label className="label">
-					<span className="label-text">Sample Frequency</span>
 				</label>
+			)}
+			<label className="m-auto w-full  md:ml-0">
+				<div className="label">
+					<span className="label-text">Sample Frequency</span>
+				</div>
 				<select
 					className="select-bordered select w-full"
 					value={frequency}
@@ -207,7 +212,7 @@ const DownloadPage = () => {
 					<option value={60}>Every hour</option>
 					<option value={86400}>Daily</option>
 				</select>
-			</div>
+			</label>
 		</div>
 	);
 

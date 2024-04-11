@@ -11,7 +11,10 @@ const AppNavbar = ({ menuOpen, onMenuOpen }: AppNavbarProps) => {
 		<div className="navbar bg-primary text-primary-content h-16">
 			<div className="flex-none lg:hidden">
 				<label className="swap-rotate swap btn-ghost btn-circle btn">
+					<span className="sr-only">Toggle Menu Open</span>
 					<input
+						aria-haspopup="menu"
+						aria-expanded={menuOpen}
 						type="checkbox"
 						checked={menuOpen}
 						onChange={(e) => onMenuOpen(e.target.checked)}
