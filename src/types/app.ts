@@ -5,6 +5,11 @@ type GlobalAlert = {
 	severity: AlertSeverity;
 };
 
+type IHistValues = {
+	timestamp: string;
+	[key: string]: number | string;
+};
+
 type RainGaugeInfo = {
 	tag: string;
 	label: string;
