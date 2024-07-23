@@ -47,6 +47,8 @@ The recommended way to install PM2 on Windows is by using [pm2-installer](https:
 
 To see the full pm2 CLI help guide, run `pm2 -h` or `pm2 [command] -h`. You can list the running processes with `pm2 status` or `pm2 list`, which includes a list of IDs and Names for the processes. You can see the logs via `pm2 logs [id|name|namespace]`. You can restart a process with `pm2 restart [id|name|namespace]` and stop with `pm2 stop [id|name|namespace]`.
 
+The process will run as **the user that runs `pm2 start`**, meaning that if you want to run the process as a different user, you will need to either run `pm2 start` or `pm2 restart` as that user. PM2 requires admin privileges to communicate with the service.
+
 ## Maintenance
 
 The Javascript ecosystem is ever-changing, and this project should be updated to address any vulnerabilities that become known. Major vulnerabilities associated with this project's dependencies can be viewed by running `npm audit`. The `npm audit fix` command will apply any upgrades that can be safely done automatically, but some fixes are more involved.
