@@ -13,10 +13,11 @@ type IHistValues = {
 type RainGaugeInfo = {
 	tag: string;
 	label: string;
-	label_short: string;
-	label_long: string;
-	address: string;
-	coordinates: string;
+	label_short: string | null;
+	label_long: string | null;
+	address: string | null;
+	coordinates: string | null;
+	unique_id: number;
 };
 
 interface LabeledReading {
@@ -84,7 +85,7 @@ interface RawReading {
 	tag: string;
 	timestamp: Date;
 	value: number;
-	quality: string;
+	quality: string | null;
 }
 
 interface RawDailyTotal {

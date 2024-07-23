@@ -7,34 +7,27 @@ import {
 	startOfMonth,
 	subMinutes,
 } from "date-fns";
-import { rainDataDB } from "../../knex";
-import { adjustDateTimezone, today } from "~/utils/utils";
+import { today } from "~/utils/utils";
 import {
 	getCurrentValues,
 	getCurrentValuesAll,
 	getTodayValues,
 	getTodayValuesAll,
 } from "./ihistorian";
+import { rainDataDb } from "~/server/db";
 
 export const getRainGauges = async () => {
-	const result: RainGaugeInfo[] = await rainDataDB("gauges")
-		.orderBy("unique_id")
-		.select(
-			"tag",
-			"label",
-			"label_short",
-			"label_long",
-			"address",
-			"coordinates",
-		);
+	const queryResult =
+		await rainDataDb.query`SELECT * FROM gauges ORDER BY unique_id`;
+	const result: RainGaugeInfo[] = queryResult.recordset;
 	return result;
 };
 
 // Get full day total
 export const getDateTotalAll = async (date: Date) => {
-	const totals: RawDailyTotal[] = await rainDataDB("daily_totals")
-		.where("date", format(date, "yyyy-MM-dd"))
-		.select("tag", "value", "date");
+	const queryResult =
+		await rainDataDb.query`SELECT * FROM daily_totals WHERE date = ${format(date, "yyyy-MM-dd")}`;
+	const totals: RawDailyTotal[] = queryResult.recordset;
 
 	if (totals.length <= 0) {
 		throw Error(`No data for date ${format(date, "yyyy-MM-dd")}`);
@@ -54,12 +47,9 @@ export const getMonthTotalAll = async (month: Date) => {
 	const startOfCurrent = startOfMonth(month);
 	const startOfNext = addMonths(startOfCurrent, 1);
 
-	const totals: GaugeTotal[] = await rainDataDB("daily_totals")
-		.where("date", ">=", format(startOfCurrent, "yyyy-MM-dd"))
-		.where("date", "<", format(startOfNext, "yyyy-MM-dd"))
-		.select("tag as label")
-		.sum("value as value")
-		.groupBy("tag");
+	const queryResult = await rainDataDb.query`SELECT tag AS label, SUM(VALUE) as value FROM daily_totals 
+    WHERE date >= ${format(startOfCurrent, "yyyy-MM-dd")} AND date < ${format(startOfNext, "yyyy-MM-dd")} GROUP BY tag`;
+	const totals: GaugeTotal[] = queryResult.recordset;
 
 	if (totals.length <= 0 && !isThisMonth(month)) {
 		throw Error(`No data for month ${format(month, "yyyy-MM")}`);
@@ -104,28 +94,17 @@ export const getTotalBetweenTwoDates = async (
 	// Because we're subtracting the previous row, we need one extra row at the beginning that we throw away
 	const minBeforeString = format(subMinutes(start, 1), "yyyy-MM-dd HH:mm:ss");
 
-	const adjustedSubQuery = rainDataDB("readings")
-		.where("timestamp", ">=", minBeforeString)
-		.where("timestamp", "<", endString)
-		// Data is usually zero when quality is not 100, so we have to filter those out with this approach
-		.where("quality", 100)
-		.select(
-			"tag",
-			"timestamp",
-			// This ugly line gets the value minus the previous row's value
-			// Using IIF to ignore negative values, which usually appear when the gauge resets at or after midnight
-			rainDataDB.raw(
-				"IIF(value - COALESCE(LAG(value) OVER (ORDER BY tag, timestamp), 0) < 0, 0, value - COALESCE(LAG(value) OVER (ORDER BY tag, timestamp), 0)) AS adj_value",
-			),
-		)
-		.as("sub");
-
-	const totals: GaugeTotal[] = await rainDataDB
-		.select("tag as label")
-		.sum("adj_value as value")
-		.from(adjustedSubQuery)
-		.where("timestamp", ">=", startString)
-		.groupBy("tag");
+	const queryResult = await rainDataDb.query`SELECT tag as label, SUM(adj_value) as value FROM (
+      SELECT 
+        tag, timestamp, 
+        -- This ugly line gets the value minus the previous row's value
+        -- Using IIF to ignore negative values, which usually appear when the gauge resets at or after midnight 
+        IIF(value - COALESCE(LAG(value) OVER (ORDER BY tag, timestamp), 0) < 0, 0, value - COALESCE(LAG(value) OVER (ORDER BY tag, timestamp), 0)) AS adj_value
+      FROM readings
+      -- Filter out rows where quality is not 100 (junk data)
+      WHERE quality = 100 AND timestamp >= ${minBeforeString} AND timestamp < ${endString}
+    ) sub WHERE timestamp >= ${startString} GROUP BY tag`;
+	const totals: GaugeTotal[] = queryResult.recordset;
 
 	// Database doesn't have current gauge values, so we add them in if today is included
 	if (isWithinInterval(today(), { start, end })) {
@@ -157,30 +136,15 @@ export const getRawData = async (
 	const startString = format(start, "yyyy-MM-dd");
 	const endString = format(end, "yyyy-MM-dd");
 
-	const dbReadings: TimestampedReading[] = await rainDataDB("readings")
-		.where("tag", gauge)
-		.where("timestamp", ">=", startString)
-		.where("timestamp", "<", endString)
-		.select("timestamp", "value", "quality")
-		.modify((builder) => {
-			if (frequency > 1 && frequency < 60) {
-				void builder.where(
-					rainDataDB.raw(`DATEPART(mi, timestamp) % ${frequency} = 0`),
-				);
-			} else if (frequency !== 1) {
-				void builder.where(rainDataDB.raw("DATEPART(mi, timestamp) = 0"));
-			}
-		});
+	const queryResult = await rainDataDb.query`SELECT * FROM readings 
+    WHERE tag = ${gauge} AND timestamp >= ${startString} AND timestamp < ${endString} AND 
+      DATEPART(mi, timestamp) % ${frequency < 60 ? frequency : 60} = 0 ORDER BY timestamp`;
+	const dbReadings: TimestampedReading[] = queryResult.recordset;
 
 	const result = {
 		label: gauge,
 		readings: dbReadings,
 	};
-
-	// Knex adjusts DB datetimes as if they are UTC (They're not)
-	for (const reading of result.readings) {
-		reading.timestamp = adjustDateTimezone(reading.timestamp);
-	}
 
 	// Database doesn't have current gauge values, so we add them in if today is included
 	if (isWithinInterval(today(), { start, end })) {
@@ -201,25 +165,10 @@ export const getRawDataAll = async (start: Date, end: Date, frequency = 1) => {
 	const startString = format(start, "yyyy-MM-dd");
 	const endString = format(end, "yyyy-MM-dd");
 
-	const rawReadings: RawReading[] = await rainDataDB("readings")
-		.where("timestamp", ">=", startString)
-		.where("timestamp", "<", endString)
-		.orderBy("timestamp", "tag")
-		.select("tag", "timestamp", "value", "quality")
-		.modify((builder) => {
-			if (frequency > 1 && frequency < 60) {
-				void builder.where(
-					rainDataDB.raw(`DATEPART(mi, timestamp) % ${frequency} = 0`),
-				);
-			} else if (frequency !== 1) {
-				void builder.where(rainDataDB.raw("DATEPART(mi, timestamp) = 0"));
-			}
-		});
-
-	// Knex adjusts DB datetimes as if they are UTC (They're not)
-	for (const reading of rawReadings) {
-		reading.timestamp = adjustDateTimezone(reading.timestamp);
-	}
+	const queryResult = await rainDataDb.query`SELECT * FROM readings 
+    WHERE timestamp >= ${startString} AND timestamp < ${endString} AND DATEPART(mi, timestamp) % ${frequency < 60 ? frequency : 60} = 0 
+    ORDER BY timestamp, tag`;
+	const rawReadings: RawReading[] = queryResult.recordset;
 
 	const result: AllGaugeValues[] = [];
 	let valueIteration: AllGaugeValues | null = null;
@@ -237,7 +186,7 @@ export const getRawDataAll = async (start: Date, end: Date, frequency = 1) => {
 		valueIteration.readings.push({
 			label: reading.tag,
 			value: reading.value,
-			quality: reading.quality,
+			quality: reading.quality ?? "",
 		});
 	}
 	if (valueIteration) result.push(valueIteration);
@@ -268,18 +217,11 @@ export const getDailyTotalHistory = async (
 	start: Date,
 	end: Date,
 ): Promise<SingleGaugeHistory> => {
-	const dailyTotals: TimestampedReading[] = await rainDataDB("daily_totals")
-		.where("date", ">=", format(start, "yyyy-MM-dd"))
-		.where("date", "<", format(end, "yyyy-MM-dd"))
-		.where("tag", gauge)
-		.select("value", "date as timestamp", rainDataDB.raw("100 as quality"));
+	const queryResult = await rainDataDb.query`SELECT value, date AS timestamp, 100 AS quality FROM daily_totals 
+      WHERE tag = ${gauge} AND date >= ${format(start, "yyyy-MM-dd")} AND date < ${format(end, "yyyy-MM-dd")}`;
+	const dailyTotals: TimestampedReading[] = queryResult.recordset;
 
 	const result: SingleGaugeHistory = { label: gauge, readings: dailyTotals };
-
-	// Knex adjusts DB datetimes as if they are UTC (They're not)
-	for (const reading of result.readings) {
-		reading.timestamp = adjustDateTimezone(reading.timestamp);
-	}
 
 	// Database doesn't have current gauge values, so we add them in if today is included
 	if (isWithinInterval(today(), { start, end })) {
@@ -294,16 +236,9 @@ export const getDailyTotalHistoryAll = async (
 	start: Date,
 	end: Date,
 ): Promise<AllGaugeValues[]> => {
-	const dailyTotals: RawDailyTotal[] = await rainDataDB("daily_totals")
-		.where("date", ">=", format(start, "yyyy-MM-dd"))
-		.where("date", "<", format(end, "yyyy-MM-dd"))
-		.orderBy("date", "tag")
-		.select("tag", "value", "date");
-
-	// Knex adjusts DB datetimes as if they are UTC (They're not)
-	for (const reading of dailyTotals) {
-		reading.date = adjustDateTimezone(reading.date);
-	}
+	const queryResult = await rainDataDb.query`SELECT * FROM daily_totals 
+    WHERE date >= ${format(start, "yyyy-MM-dd")} AND date < ${format(end, "yyyy-MM-dd")} ORDER BY date, tag`;
+	const dailyTotals: RawDailyTotal[] = queryResult.recordset;
 
 	const result: AllGaugeValues[] = [];
 	let valueIteration: AllGaugeValues | null = null;

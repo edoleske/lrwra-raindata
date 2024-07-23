@@ -16,9 +16,9 @@ const GaugeDetails = () => {
 				key={gauge.tag}
 				className="hover cursor-pointer"
 				tabIndex={0}
-				onClick={() => linkToGIS(gauge.coordinates)}
+				onClick={() => linkToGIS(gauge.coordinates ?? "")}
 				onKeyDown={(e) => {
-					if (e.key === "Enter") linkToGIS(gauge.coordinates);
+					if (e.key === "Enter") linkToGIS(gauge.coordinates ?? "");
 				}}
 			>
 				<td className="sm:hidden">{gauge.label_short}</td>

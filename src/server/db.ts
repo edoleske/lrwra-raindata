@@ -1,4 +1,5 @@
 import * as adodb from "node-adodb";
+import * as mssql from "mssql/msnodesqlv8";
 import { env } from "~/env.mjs";
 
 /*
@@ -7,6 +8,20 @@ import { env } from "~/env.mjs";
  *   IHIST_DB_PASSWORD
  *   IHIST_DB_SOURCE
  */
-const connectionString = `Provider=IhOLEDB.iHistorian.1;User ID=${env.IHIST_DB_USER};Password=${env.IHIST_DB_PASSWORD};Persist Security Info=false;Data Source=${env.IHIST_DB_SOURCE};Mode=Read`;
+export const iHistorianDb = adodb.open(
+	`Provider=IhOLEDB.iHistorian.1;User ID=${env.IHIST_DB_USER};Password=${env.IHIST_DB_PASSWORD};Persist Security Info=false;Data Source=${env.IHIST_DB_SOURCE};Mode=Read`,
+);
 
-export const connection = adodb.open(connectionString);
+const sqlConnectionPool = new mssql.ConnectionPool({
+	server: env.DB_HOST,
+	database: "RainData",
+	options: {
+		instanceName: "SQL19",
+		trustedConnection: true,
+		trustServerCertificate: true,
+		useUTC: false,
+	},
+	driver: "msnodesqlv8",
+});
+
+export const rainDataDb = await sqlConnectionPool.connect();

@@ -45,7 +45,7 @@ const DownloadPage = () => {
 			const gaugeString =
 				rainGauges.data
 					?.find((rg) => rg.tag === selectedGauge)
-					?.label_short.replace(/\s/g, "") ?? selectedGauge;
+					?.label_short?.replace(/\s/g, "") ?? selectedGauge;
 			let dateString = startDate.replace("-", "");
 			if (dateRange) {
 				dateString += `-${endDate.replace("-", "")}`;

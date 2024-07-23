@@ -1,5 +1,5 @@
 import { add, addDays, compareAsc, format } from "date-fns";
-import { connection } from "../../db";
+import { iHistorianDb } from "../../db";
 import {
 	assertHistorianValuesAll,
 	assertHistorianValuesSingle,
@@ -20,7 +20,7 @@ export const getCurrentValues = async (gauge: string) => {
     WHERE samplingmode = CurrentValue
   `;
 
-	const result = await connection.query(queryString);
+	const result = await iHistorianDb.query(queryString);
 	assertHistorianValuesSingle(result, gauge);
 	return parseDatabaseCurrentValue(result, gauge);
 };
@@ -35,7 +35,7 @@ export const getCurrentValuesAll = async (gauges: RainGaugeInfo[]) => {
     WHERE samplingmode = CurrentValue
   `;
 
-	const result = await connection.query(queryString);
+	const result = await iHistorianDb.query(queryString);
 	assertHistorianValuesAll(result, gauges);
 
 	const firstValue = result[0];
@@ -71,7 +71,7 @@ export const getRawData = async (
       ORDER BY TIMESTAMP
     `;
 
-		const queryResult = await connection.query(queryString);
+		const queryResult = await iHistorianDb.query(queryString);
 		assertHistorianValuesSingle(queryResult, gauge);
 		result = result.concat(queryResult);
 	}
@@ -107,7 +107,7 @@ export const getRawDataAll = async (
       ORDER BY TIMESTAMP
     `;
 
-		const queryResult = await connection.query(queryString);
+		const queryResult = await iHistorianDb.query(queryString);
 		assertHistorianValuesAll(queryResult, gauges);
 		result = result.concat(queryResult);
 	}

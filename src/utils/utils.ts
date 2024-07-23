@@ -19,12 +19,6 @@ export const pureDate = (d: Date) => {
 	return d;
 };
 
-// Utility function to add timezone offset to date (Knex adjusts it automatically)
-export const adjustDateTimezone = (d: Date) => {
-	const userTimezoneOffset = d.getTimezoneOffset() * 60000;
-	return new Date(d.getTime() + userTimezoneOffset);
-};
-
 // Either get datetime as second before midnight, or current time (- 1min) if date is today
 // Formats the datetime to be used in iHistorian query
 export const iHistFormatDT = (date: Date) =>
