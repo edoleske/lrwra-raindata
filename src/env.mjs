@@ -10,9 +10,11 @@ const server = z.object({
 	IHIST_DB_PASSWORD: z.string(),
 	IHIST_DB_SOURCE: z.string(),
 	PORT: z.string(),
-	DB_HOST: z.string(),
-	DB_USER: z.string(),
-	DB_PASS: z.string(),
+  RAINDATA_DB_HOST: z.string(),
+  RAINDATA_DB_INSTANCE: z.string().nullish(),
+  RAINDATA_DB_DATABASE: z.string(),
+  RAINDATA_DB_USER: z.string(),
+  RAINDATA_DB_PASS: z.string(),
 });
 
 /**
@@ -35,10 +37,11 @@ const processEnv = {
 	IHIST_DB_PASSWORD: process.env.IHIST_DB_PASSWORD,
 	IHIST_DB_SOURCE: process.env.IHIST_DB_SOURCE,
 	PORT: process.env.PORT,
-	DB_HOST: process.env.DB_HOST,
-	DB_USER: process.env.DB_USER,
-	DB_PASS: process.env.DB_PASS,
-	// NEXT_PUBLIC_CLIENTVAR: process.env.NEXT_PUBLIC_CLIENTVAR,
+	RAINDATA_DB_HOST: process.env.RAINDATA_DB_HOST,
+  RAINDATA_DB_INSTANCE: process.env.RAINDATA_DB_INSTANCE,
+  RAINDATA_DB_DATABASE: process.env.RAINDATA_DB_DATABASE,
+	RAINDATA_DB_USER: process.env.RAINDATA_DB_USER,
+	RAINDATA_DB_PASS: process.env.RAINDATA_DB_PASS,
 };
 
 // Don't touch the part below

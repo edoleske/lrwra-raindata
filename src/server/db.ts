@@ -1,5 +1,5 @@
 import * as adodb from "node-adodb";
-import * as mssql from "mssql/msnodesqlv8";
+import * as mssql from "mssql";
 import { env } from "~/env.mjs";
 
 /*
@@ -13,15 +13,16 @@ export const iHistorianDb = adodb.open(
 );
 
 const sqlConnectionPool = new mssql.ConnectionPool({
-	server: env.DB_HOST,
-	database: "RainData",
+	server: env.RAINDATA_DB_HOST,
+	database: env.RAINDATA_DB_DATABASE,
+	user: env.RAINDATA_DB_USER,
+	password: env.RAINDATA_DB_PASS,
 	options: {
-		instanceName: "SQL19",
-		trustedConnection: true,
+		instanceName: env.RAINDATA_DB_INSTANCE ?? undefined,
 		trustServerCertificate: true,
 		useUTC: false,
 	},
-	driver: "msnodesqlv8",
+	driver: "tedious",
 });
 
 export const rainDataDb = await sqlConnectionPool.connect();

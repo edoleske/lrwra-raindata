@@ -19,6 +19,7 @@
     "daisyui": "^4.10.1",
     "date-fns": "^3.6.0",
     "file-saver": "^2.0.5",
+    "mssql": "^11.0.1",
     "next": "^14.1.4",
     "next-themes": "^0.3.0",
     "node-adodb": "^5.0.3",
@@ -27,6 +28,7 @@
     "react-icons": "^5.0.1",
     "sharp": "^0.33.3",
     "superjson": "^2.2.1",
+    "tedious": "^18.3.0",
     "zod": "^3.20.6"
   },
   "devDependencies": {
