@@ -16,6 +16,7 @@ import {
 	getRainGauges,
 	getDateTotalAll,
 	getMonthTotalAll,
+	getYearTotalAll,
 } from "~/server/api/queries/raindatabase";
 
 export const rainDataRouter = createTRPCRouter({
@@ -72,6 +73,24 @@ export const rainDataRouter = createTRPCRouter({
 
 			try {
 				const totals = await getMonthTotalAll(input.month);
+				return totals;
+			} catch (err) {
+				handleError(err);
+			}
+		}),
+	yearTotals: publicProcedure
+		.input(z.object({ year: z.string() }))
+		.query(async ({ input }) => {
+			const year = +input.year.trim();
+			if (Number.isNaN(year)) {
+				throw new TRPCError({
+					code: "BAD_REQUEST",
+					message: `Invalid year: ${year}`,
+				});
+			}
+
+			try {
+				const totals = await getYearTotalAll(year);
 				return totals;
 			} catch (err) {
 				handleError(err);

@@ -83,6 +83,45 @@ export const getMonthTotalAll = async (month: Date) => {
 	return result;
 };
 
+// Get full year total
+export const getYearTotalAll = async (year: number) => {
+	const queryResult =
+		await rainDataDb.query`SELECT tag as label, SUM(value) as value FROM daily_totals WHERE YEAR(date) = ${year} GROUP BY tag`;
+	const totals: GaugeTotal[] = queryResult.recordset;
+
+	const isCurrentYear = new Date().getFullYear() === year;
+	if (totals.length <= 0 && !isCurrentYear) {
+		throw Error(`No data for year ${year}`);
+	}
+
+	const result: AllGaugeTotals = {
+		startDate: new Date(year, 0, 1),
+		endDate: new Date(year, 11, 31),
+		readings: totals,
+	};
+
+	// If current year, we have to add current values
+	if (isCurrentYear) {
+		const gauges = await getRainGauges();
+		const currentValues = await getCurrentValuesAll(gauges);
+		for (const total of result.readings) {
+			const currentValue = currentValues.readings.find(
+				(reading) => reading.label === total.label,
+			);
+			if (currentValue) {
+				total.value += currentValue.value;
+			}
+		}
+
+		// If this is run on Jan 1, nothing will be in the database
+		if (result.readings.length <= 0) {
+			result.readings = currentValues.readings;
+		}
+	}
+
+	return result;
+};
+
 // This is the function used for getting readings between two datetimes
 export const getTotalBetweenTwoDates = async (
 	start: Date,

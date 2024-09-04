@@ -2,6 +2,7 @@ import { useState } from "react";
 import CustomTotalTable from "~/components/table/CustomTotalTable";
 import DayTotalTable from "~/components/table/DayTotalTable";
 import MonthTotalTable from "~/components/table/MonthTotalTable";
+import YearTotalTable from "~/components/table/YearTotalTable";
 
 const TablePage = () => {
 	const [tableType, setTableType] = useState(0);
@@ -14,6 +15,9 @@ const TablePage = () => {
 			return <MonthTotalTable />;
 		}
 		if (tableType === 2) {
+			return <YearTotalTable />;
+		}
+		if (tableType === 3) {
 			return <CustomTotalTable />;
 		}
 		return <DayTotalTable />;
@@ -43,6 +47,14 @@ const TablePage = () => {
 					type="button"
 					className={`tab ${tableType === 2 ? "tab-active" : ""}`}
 					onClick={() => setTableType(2)}
+				>
+					Year
+				</button>
+				<button
+					role="tab"
+					type="button"
+					className={`tab ${tableType === 3 ? "tab-active" : ""}`}
+					onClick={() => setTableType(3)}
 				>
 					Custom
 				</button>
