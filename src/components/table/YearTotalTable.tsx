@@ -37,16 +37,24 @@ const YearTotalTable = () => {
 	};
 
 	const DataTable = () => {
-		if (historyValues.isError) {
-			return <QueryErrorAlert message={historyValues.error.message} />;
-		}
-
-		if (rainGauges.isError) {
-			return <QueryErrorAlert message={rainGauges.error.message} />;
-		}
-
-		if (!historyValues.data || !rainGauges.data) {
+		if (historyValues.isLoading || rainGauges.isLoading) {
 			return <Loading />;
+		}
+
+		if (historyValues.isError || !historyValues.data) {
+			return (
+				<QueryErrorAlert
+					message={historyValues.error?.message ?? "No reading data found"}
+				/>
+			);
+		}
+
+		if (rainGauges.isError || !rainGauges.data) {
+			return (
+				<QueryErrorAlert
+					message={rainGauges.error?.message ?? "No rain gauge data found"}
+				/>
+			);
 		}
 
 		return (
