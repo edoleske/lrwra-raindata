@@ -9,11 +9,13 @@ interface BarChartProps {
 }
 
 const drawGraph = (
-	svgRef: RefObject<SVGSVGElement>,
-	tooltipRef: RefObject<HTMLDivElement>,
+	svgRef: RefObject<SVGSVGElement | null>,
+	tooltipRef: RefObject<HTMLDivElement | null>,
 	data: ChartDataPoint[],
 	dimensions: ChartDimensions,
 ) => {
+  if (svgRef.current === null) return;
+  
 	const svg = d3
 		.select(svgRef.current)
 		.attr("width", dimensions.width)
@@ -155,7 +157,7 @@ const drawGraph = (
 		});
 };
 
-const clearGraph = (svgRef: RefObject<SVGSVGElement>) => {
+const clearGraph = (svgRef: RefObject<SVGSVGElement | null>) => {
 	const svg = d3.select(svgRef.current);
 	svg.selectAll("*").remove();
 };
