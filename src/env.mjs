@@ -23,6 +23,7 @@ const server = z.object({
  */
 const client = z.object({
   NEXT_PUBLIC_GIS_IFRAME_URL: z.string(),
+  NEXT_PUBLIC_RJN_IFRAME_URL: z.string(),
 });
 
 /**
@@ -38,6 +39,7 @@ const processEnv = {
 	IHIST_DB_SOURCE: process.env.IHIST_DB_SOURCE,
 	PORT: process.env.PORT,
   NEXT_PUBLIC_GIS_IFRAME_URL: process.env.NEXT_PUBLIC_GIS_IFRAME_URL,
+  NEXT_PUBLIC_RJN_IFRAME_URL: process.env.NEXT_PUBLIC_RJN_IFRAME_URL,
 	RAINDATA_DB_HOST: process.env.RAINDATA_DB_HOST,
   RAINDATA_DB_INSTANCE: process.env.RAINDATA_DB_INSTANCE,
   RAINDATA_DB_DATABASE: process.env.RAINDATA_DB_DATABASE,

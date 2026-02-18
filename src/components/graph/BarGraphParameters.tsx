@@ -71,7 +71,7 @@ const BarGraphParameters = ({
 						<input
 							type="radio"
 							name="barGraphMonth"
-							className="radio radio-sm md:radio-md mr-4"
+							className="radio radio-sm mr-4"
 							value="true"
 							checked={monthData}
 							onChange={(e) => setMonthData(e.target.value === "true")}

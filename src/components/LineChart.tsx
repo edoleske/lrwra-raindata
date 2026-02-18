@@ -82,7 +82,19 @@ const drawGraph = (
 	group
 		.append("g")
 		.attr("transform", `translate(${dimensions.margin.left}, 0)`)
-		.call(d3.axisLeft(yScale));
+		.call(d3.axisLeft(yScale).tickSize(-boundedWidth)).selectAll("line").attr('opacity', 0.2);
+    
+  // Right border
+  group
+    .append("g")
+    .attr("transform", `translate(${boundedWidth + dimensions.margin.right}, 0)`)
+    .call(
+      d3
+      .axisRight(yScale)
+      .tickSize(0)
+    )
+    .selectAll("text")
+    .remove();
 
 	group
 		.append("path")
@@ -90,7 +102,7 @@ const drawGraph = (
 		.attr("width", 20)
 		.style("fill", "none")
 		.attr("class", "stroke-secondary")
-		.style("stroke-width", 1.5)
+		.style("stroke-width", 1.75)
 		.attr(
 			"d",
 			d3

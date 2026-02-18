@@ -52,7 +52,7 @@ const drawGraph = (
 
 	const valueExtent = [
 		Math.min(...data.map((d) => d.value)),
-		Math.max(...data.map((d) => d.value), 0.1),
+		Math.ceil(Math.max(...data.map((d) => d.value), 0.1) * 10) / 10,
 	];
 
 	const yScale = d3
@@ -89,7 +89,19 @@ const drawGraph = (
 	group
 		.append("g")
 		.attr("transform", `translate(${dimensions.margin.left}, 0)`)
-		.call(d3.axisLeft(yScale));
+		.call(d3.axisLeft(yScale).tickSize(-boundedWidth)).selectAll("line").attr("opacity", 0.2);
+
+  // Right border
+  group
+		.append("g")
+		.attr("transform", `translate(${boundedWidth + dimensions.margin.right}, 0)`)
+		.call(
+      d3
+      .axisRight(yScale)
+      .tickSize(0)
+    )
+    .selectAll("text")
+    .remove();
 
 	group
 		.append("g")

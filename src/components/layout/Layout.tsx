@@ -99,6 +99,9 @@ const Layout = ({ children }: LayoutProps) => {
 									Gauge Info
 								</Link>
 							</li>
+              <li>
+                <Link role="menuitem" href="/rjn" className={router.asPath === "/rjn" ? "active" : ""}>RJN Dashboard</Link>
+              </li>
 							<label className="swap btn-ghost swap-rotate btn-circle btn mt-auto">
 								<span className="sr-only">Switch Theme</span>
 								<input
