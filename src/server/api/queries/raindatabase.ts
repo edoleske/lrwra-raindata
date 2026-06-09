@@ -26,7 +26,7 @@ export const getRainGauges = async () => {
 // Get full day total
 export const getDateTotalAll = async (date: Date) => {
 	const queryResult =
-		await rainDataDb.query`SELECT * FROM daily_totals WHERE date = ${format(date, "yyyy-MM-dd")}`;
+		await rainDataDb.query`SELECT gauges.tag, value, date FROM daily_totals JOIN gauges ON tag_id = unique_id WHERE date = ${format(date, "yyyy-MM-dd")}`;
 	const totals: RawDailyTotal[] = queryResult.recordset;
 
 	if (totals.length <= 0) {
@@ -47,8 +47,8 @@ export const getMonthTotalAll = async (month: Date) => {
 	const startOfCurrent = startOfMonth(month);
 	const startOfNext = addMonths(startOfCurrent, 1);
 
-	const queryResult = await rainDataDb.query`SELECT tag AS label, SUM(VALUE) as value FROM daily_totals 
-    WHERE date >= ${format(startOfCurrent, "yyyy-MM-dd")} AND date < ${format(startOfNext, "yyyy-MM-dd")} GROUP BY tag`;
+	const queryResult = await rainDataDb.query`SELECT gauges.tag AS label, SUM(VALUE) as value FROM daily_totals JOIN gauges ON tag_id = unique_id
+    WHERE date >= ${format(startOfCurrent, "yyyy-MM-dd")} AND date < ${format(startOfNext, "yyyy-MM-dd")} GROUP BY gauges.tag`;
 	const totals: GaugeTotal[] = queryResult.recordset;
 
 	if (totals.length <= 0 && !isThisMonth(month)) {
@@ -86,7 +86,8 @@ export const getMonthTotalAll = async (month: Date) => {
 // Get full year total
 export const getYearTotalAll = async (year: number) => {
 	const queryResult =
-		await rainDataDb.query`SELECT tag as label, SUM(value) as value FROM daily_totals WHERE YEAR(date) = ${year} GROUP BY tag`;
+		await rainDataDb.query`SELECT gauges.tag as label, SUM(value) as value FROM daily_totals JOIN gauges ON tag_id = unique_id 
+      WHERE YEAR(date) = ${year} GROUP BY gauges.tag`;
 	const totals: GaugeTotal[] = queryResult.recordset;
 
 	const isCurrentYear = new Date().getFullYear() === year;
@@ -135,11 +136,12 @@ export const getTotalBetweenTwoDates = async (
 
 	const queryResult = await rainDataDb.query`SELECT tag as label, SUM(adj_value) as value FROM (
       SELECT 
-        tag, timestamp, 
+        gauges.tag, timestamp, 
         -- This ugly line gets the value minus the previous row's value
         -- Using IIF to ignore negative values, which usually appear when the gauge resets at or after midnight 
-        IIF(value - COALESCE(LAG(value) OVER (ORDER BY tag, timestamp), 0) < 0, 0, value - COALESCE(LAG(value) OVER (ORDER BY tag, timestamp), 0)) AS adj_value
+        IIF(value - COALESCE(LAG(value) OVER (ORDER BY gauges.tag, timestamp), 0) < 0, 0, value - COALESCE(LAG(value) OVER (ORDER BY gauges.tag, timestamp), 0)) AS adj_value
       FROM readings
+        JOIN gauges ON tag_id = unique_id
       -- Filter out rows where quality is not 100 (junk data)
       WHERE quality = 100 AND timestamp >= ${minBeforeString} AND timestamp < ${endString}
     ) sub WHERE timestamp >= ${startString} GROUP BY tag`;
@@ -175,8 +177,8 @@ export const getRawData = async (
 	const startString = format(start, "yyyy-MM-dd");
 	const endString = format(end, "yyyy-MM-dd");
 
-	const queryResult = await rainDataDb.query`SELECT * FROM readings 
-    WHERE tag = ${gauge} AND timestamp >= ${startString} AND timestamp < ${endString} AND 
+	const queryResult = await rainDataDb.query`SELECT * FROM readings JOIN gauges ON tag_id = unique_id
+    WHERE gauges.tag = ${gauge} AND timestamp >= ${startString} AND timestamp < ${endString} AND 
       DATEPART(mi, timestamp) % ${frequency < 60 ? frequency : 60} = 0 ORDER BY timestamp`;
 	const dbReadings: TimestampedReading[] = queryResult.recordset;
 
@@ -204,9 +206,10 @@ export const getRawDataAll = async (start: Date, end: Date, frequency = 1) => {
 	const startString = format(start, "yyyy-MM-dd");
 	const endString = format(end, "yyyy-MM-dd");
 
-	const queryResult = await rainDataDb.query`SELECT * FROM readings 
+	const queryResult = await rainDataDb.query`SELECT gauges.tag, [timestamp], value, quality 
+    FROM readings JOIN gauges ON tag_id = unique_id
     WHERE timestamp >= ${startString} AND timestamp < ${endString} AND DATEPART(mi, timestamp) % ${frequency < 60 ? frequency : 60} = 0 
-    ORDER BY timestamp, tag`;
+    ORDER BY timestamp, gauges.tag`;
 	const rawReadings: RawReading[] = queryResult.recordset;
 
 	const result: AllGaugeValues[] = [];
@@ -256,8 +259,8 @@ export const getDailyTotalHistory = async (
 	start: Date,
 	end: Date,
 ): Promise<SingleGaugeHistory> => {
-	const queryResult = await rainDataDb.query`SELECT value, date AS timestamp, 100 AS quality FROM daily_totals 
-      WHERE tag = ${gauge} AND date >= ${format(start, "yyyy-MM-dd")} AND date < ${format(end, "yyyy-MM-dd")}`;
+	const queryResult = await rainDataDb.query`SELECT value, date AS timestamp, 100 AS quality FROM daily_totals JOIN gauges ON tag_id = unique_id
+      WHERE gauges.tag = ${gauge} AND date >= ${format(start, "yyyy-MM-dd")} AND date < ${format(end, "yyyy-MM-dd")}`;
 	const dailyTotals: TimestampedReading[] = queryResult.recordset;
 
 	const result: SingleGaugeHistory = { label: gauge, readings: dailyTotals };
@@ -275,8 +278,8 @@ export const getDailyTotalHistoryAll = async (
 	start: Date,
 	end: Date,
 ): Promise<AllGaugeValues[]> => {
-	const queryResult = await rainDataDb.query`SELECT * FROM daily_totals 
-    WHERE date >= ${format(start, "yyyy-MM-dd")} AND date < ${format(end, "yyyy-MM-dd")} ORDER BY date, tag`;
+	const queryResult = await rainDataDb.query`SELECT gauges.tag, value, date FROM daily_totals JOIN gauges ON tag_id = unique_id
+    WHERE date >= ${format(start, "yyyy-MM-dd")} AND date < ${format(end, "yyyy-MM-dd")} ORDER BY date, gauges.tag`;
 	const dailyTotals: RawDailyTotal[] = queryResult.recordset;
 
 	const result: AllGaugeValues[] = [];
